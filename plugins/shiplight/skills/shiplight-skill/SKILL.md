@@ -1,5 +1,5 @@
 ---
-name: shiplight-skill
+name: verify
 version: 1.0.0
 description: "Shiplight test case creation, runs, environments, folders, and account management."
 ---
