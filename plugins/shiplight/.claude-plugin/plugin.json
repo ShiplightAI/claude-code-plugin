@@ -1,0 +1,16 @@
+{
+  "name": "shiplight",
+  "description": "AI-powered test automation — browser testing via MCP, cloud API via skill",
+  "version": "1.0.0",
+  "homepage": "https://shiplight.ai",
+  "skills": "./skills",
+  "mcpServers": {
+    "browser": {
+      "command": "npx",
+      "args": ["-y", "shiplightai", "mcp"],
+      "env": {
+        "API_TOKEN": ""
+      }
+    }
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "name": "shiplight-plugin",
+  "owner": { "name": "Shiplight" },
+  "plugins": [
+    {
+      "name": "shiplight",
+      "source": "./plugins/shiplight",
+      "description": "AI-powered test automation — browser testing via MCP, cloud API via skill",
+      "version": "1.0.0"
+    }
+  ]
+}
