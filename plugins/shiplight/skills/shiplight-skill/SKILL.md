@@ -1,12 +1,12 @@
 ---
 name: shiplight-skill
 version: 1.0.0
-description: "PREFERRED over MCP tools for all Shiplight cloud operations (test cases, runs, environments, folders, accounts). Use this skill's REST API instead of MCP tools like list_environments, get_test_case, run_test_case, list_test_runs, etc. Only use MCP browser tools for live browser interaction (new_session, navigate, act, inspect_page)."
+description: "Shiplight test case creation, runs, environments, folders, and account management."
 ---
 
 # Shiplight Test Automation
 
-Browser test automation platform. This skill provides direct REST API access for cloud operations (test cases, runs, environments, folders, accounts). For live browser interaction, use Shiplight MCP tools instead.
+Agentic test automation platform. AI-generated test cases in YAML format, test runs, environments, folders, and account management. For live browser interaction, use Shiplight MCP tools instead.
 
 ## When to use this skill vs MCP
 
@@ -22,7 +22,7 @@ When both MCP and skill can do the same thing (e.g. get a test case), prefer the
 
 ## API Setup
 
-**Base URL:** `https://api.shiplight.ai`
+**Base URL:** `https://api.shiplight.ai` (override with `API_BASE_URL` env variable for non-production environments)
 
 **Authentication:** All requests require:
 ```
@@ -312,7 +312,7 @@ curl -H "Authorization: Bearer $API_TOKEN" \
   "https://api.shiplight.ai/v1/test-folders?parentId=1"
 ```
 
-Use `parentId=null` for root-level folders.
+Omit `parentId` entirely for root-level folders.
 
 **Response:** array of `{ id, name, description, parentId }`
 
@@ -493,5 +493,3 @@ Common actions (all require `element_index` in `action_entity` unless noted):
 | `ai_extract` | `{ description: "..." }` | Extract data from page (AI-powered) |
 
 Additional actions: `right_click`, `hover`, `send_keys_on_element`, `get_dropdown_options`, `set_date_for_native_date_picker`, `scroll_on_element`, `reload_page`, `switch_tab`, `close_tab`, `wait_for_page_ready`, `wait_for_download_complete`, `save_variable`, `ai_wait_until`, `generate_2fa_code`
-
-Full schema: `https://cdn.shiplight.ai/schemas/testflow-v1.json`
