@@ -1,24 +1,11 @@
 ---
-name: verify
-version: 1.0.0
+name: shiplight
 description: "Shiplight test case creation, runs, environments, folders, and account management."
 ---
 
-# Shiplight Test Automation
+# Shiplight Cloud
 
-Agentic test automation platform. AI-generated test cases in YAML format, test runs, environments, folders, and account management. For live browser interaction, use Shiplight MCP tools instead.
-
-## When to use this skill vs MCP
-
-```
-Does the task involve a live browser?
-├── YES → Use MCP tools (new_session, navigate, act, inspect_page, debug tools)
-└── NO → Is it a cloud operation (test cases, runs, results, environments)?
-    ├── YES → Call REST API directly (this skill)
-    └── NO → Generate files locally (project scaffold, YAML export)
-```
-
-When both MCP and skill can do the same thing (e.g. get a test case), prefer the REST API — same result, fewer tokens.
+Manage test cases, test runs, environments, folders, and accounts via the Shiplight REST API.
 
 ## API Setup
 

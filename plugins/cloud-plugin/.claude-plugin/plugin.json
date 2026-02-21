@@ -1,0 +1,6 @@
+{
+  "name": "shiplight-cloud",
+  "description": "Adds a /shiplight skill for cloud test case management — create, run, and manage tests via Shiplight API",
+  "version": "1.0.0",
+  "homepage": "https://www.shiplight.ai"
+}
