@@ -4,14 +4,14 @@ AI-powered test automation for Claude Code — browser testing via MCP and cloud
 
 ## Plugins
 
-### shiplight-mcp (free)
+### mcp-plugin (free)
 
 Browser automation MCP tools + UI verification skill.
 
 - **MCP tools** — live browser sessions, navigation, actions, page inspection, debugging
 - **Skill** — `/verify` (aka `/shiplight-mcp:verify`) — verify UI changes in the browser using MCP tools
 
-### shiplight-cloud (paid)
+### cloud-plugin (paid)
 
 Cloud test case management via REST API.
 
