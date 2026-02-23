@@ -1,5 +1,5 @@
 {
-  "name": "shiplight-mcp",
+  "name": "shiplight",
   "description": "Adds a /verify skill for browser testing and local test verification",
   "version": "1.0.0",
   "mcpServers": {
