@@ -16,7 +16,35 @@ Manage test cases, test runs, environments, folders, and accounts via the Shipli
 Authorization: Bearer $API_TOKEN
 ```
 
-Find `API_TOKEN` in `.env` file, environment variables, or prompt the user.
+### Token Resolution Order
+
+Resolve `API_TOKEN` using this priority:
+
+1. **Local credentials file** — read `~/.shiplight/credentials.json` → use the `token` field
+2. **Environment variable** — check `$SHIPLIGHT_API_TOKEN` or `$API_TOKEN`
+3. **`.env` file** — check `.env` in the current project directory
+
+If none found, tell the user:
+> No Shiplight API token found. Run `/mcp` in Claude Code, select the Shiplight Cloud server, and click **Authenticate** to log in. Then retry this command.
+
+### Saving the Token After OAuth
+
+After the user authenticates via `/mcp`, the MCP server provides a `get_api_token` tool. Call it to retrieve the token, then save it locally:
+
+```bash
+mkdir -p ~/.shiplight && cat > ~/.shiplight/credentials.json << 'EOF'
+{"token": "<TOKEN_FROM_MCP>"}
+EOF
+chmod 600 ~/.shiplight/credentials.json
+```
+
+### Handling Expired Tokens
+
+If any API call returns **401**, the token is expired or revoked:
+
+1. Delete the local credentials: `rm ~/.shiplight/credentials.json`
+2. Tell the user: "Your API token has expired. Run `/mcp`, select Shiplight Cloud, and click **Re-authenticate**."
+3. After re-auth, call `get_api_token` again and re-save to `~/.shiplight/credentials.json`.
 
 **Optional headers:**
 - `organization-id` — required for some endpoints with admin tokens
@@ -25,7 +53,7 @@ Find `API_TOKEN` in `.env` file, environment variables, or prompt the user.
 
 | HTTP Status | Meaning              | Action                              |
 |-------------|----------------------|-------------------------------------|
-| 401         | Invalid/expired token | Prompt user to check API_TOKEN     |
+| 401         | Invalid/expired token | Delete `~/.shiplight/credentials.json`, prompt user to re-authenticate via `/mcp` |
 | 403         | Insufficient permissions | Inform user of permission issue |
 | 404         | Resource not found   | Report missing resource             |
 | 422         | Validation error     | Show validation message to user     |
