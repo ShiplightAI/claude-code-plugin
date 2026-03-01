@@ -20,14 +20,11 @@ Cloud test case management via REST API.
 ## Install
 
 ```bash
-# Add the marketplace (one-time)
-/plugin marketplace add ShiplightAI/claude-code-plugin
-
 # Install the free plugin (browser MCP tools + verify skill)
-/plugin install mcp-plugin@shiplight-plugins
+claude plugin marketplace add ShiplightAI/claude-code-plugin && claude plugin install mcp-plugin@shiplight-plugins
 
 # Install the cloud plugin (requires API token)
-/plugin install cloud-plugin@shiplight-plugins
+claude plugin marketplace add ShiplightAI/claude-code-plugin && claude plugin install cloud-plugin@shiplight-plugins
 ```
 
 After installation, exit and restart Claude Code for the plugins to take effect.
