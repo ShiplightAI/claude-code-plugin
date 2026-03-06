@@ -398,44 +398,78 @@ curl -X POST -H "Authorization: Bearer $API_TOKEN" \
 
 ---
 
-## Agent Session Video Upload
+## Agent Session Verification Report
 
-Upload a locally saved agent session recording to S3 and get a permanent public URL for embedding in PRs or sharing. Use this after a successful verification session where `record_video: true` was set — `close_session` returns a `local_video_path`. **Only upload on successful verification.** Skip if verification failed.
+After a successful verification session where `record_video: true` was set, generate and upload a hosted HTML report that embeds the video inline. **Only do this on successful verification.** Share the `reportUrl` (not the raw video URL) in the PR description.
 
-### Get Video Upload URL
+`close_session` returns a `local_video_path` — use it in Step 1.
+
+---
+
+### Step 1 — Upload the video
 
 ```bash
+# Get presigned upload URL
 curl -s -X POST \
   -H "Authorization: Bearer $API_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"filename": "recording.webm"}' \
   https://api.shiplight.ai/v1/agent/video-upload-url
-```
+# → { uploadUrl, videoUrl }
 
-**Request body:**
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `filename` | string | yes | Filename of the video (e.g. `recording.webm`) |
-
-**Response:** `{ uploadUrl, videoUrl }`
-
-- `uploadUrl` — presigned S3 URL for upload, expires in **5 minutes**
-- `videoUrl` — permanent public URL, never expires
-
-### Upload Video to S3
-
-```bash
+# Upload video
 curl -X PUT \
   -H "Content-Type: video/webm" \
   --upload-file "$LOCAL_VIDEO_PATH" \
   "$UPLOAD_URL"
 ```
 
-The `videoUrl` from the Get Video Upload URL step is the permanent public URL. Embed it in the PR description:
+Save the returned `videoUrl` — it is the permanent public video URL used in the report.
+
+---
+
+### Step 2 — Generate HTML report (MCP tool)
+
+Call `generate_report_html` with the verification results:
+
+```json
+{
+  "video_url": "<permanent video URL from Step 1>",
+  "title": "Todo App — Install MCP button",
+  "date": "March 4, 2026",
+  "steps": [
+    { "feature": "Install MCP button visible", "status": "pass" },
+    { "feature": "MCP server connects successfully", "status": "pass" }
+  ]
+}
+```
+
+The tool writes the HTML file and returns `{ success: true, file_path: "/tmp/report.html" }`. Use `file_path` in Step 3.
+
+---
+
+### Step 3 — Upload HTML report and get reportUrl
+
+```bash
+# Get presigned upload URL for the HTML file
+curl -s -X POST \
+  -H "Authorization: Bearer $API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"filename": "report.html"}' \
+  https://api.shiplight.ai/v1/agent/video-upload-url
+# → { uploadUrl, videoUrl }  ← use videoUrl as reportUrl
+
+# Upload HTML (Content-Type must be text/html so S3 serves it as a web page)
+curl -X PUT \
+  -H "Content-Type: text/html" \
+  --upload-file "$FILE_PATH" \
+  "$UPLOAD_URL"
+```
+
+The `videoUrl` from this response is the permanent `reportUrl`. Embed it in the PR description:
 
 ```
-🎥 [Verification recording]($VIDEO_URL)
+📋 [Verification report]($REPORT_URL)
 ```
 
 ---
