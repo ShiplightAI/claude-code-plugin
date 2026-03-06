@@ -61,17 +61,26 @@ npx playwright install chromium
 
 If the app requires login:
 
-**a. Create `shiplight.config.json`** inside the test subdirectory (e.g., `tests/my-app/shiplight.config.json`):
+**a. Create `shiplight.config.json`** inside the test subdirectory (e.g., `tests/my-app/shiplight.config.json`).
+
+Use `$ENV_VAR` references for credentials so the config can be safely committed to git:
 
 ```json
 {
   "url": "https://app.example.com",
-  "username": "testuser@example.com",
-  "password": "secret123"
+  "username": "$MY_APP_EMAIL",
+  "password": "$MY_APP_PASSWORD"
 }
 ```
 
-If the app uses 2FA/TOTP, include the `totp_secret` field.
+Then add the actual values to `.env` (which is gitignored):
+
+```
+MY_APP_EMAIL=testuser@example.com
+MY_APP_PASSWORD=secret123
+```
+
+If the app uses 2FA/TOTP, include the `totp_secret` field (also supports `$ENV_VAR` references).
 
 `shiplightConfig()` auto-generates an `auth.setup.ts` file next to each `shiplight.config.json` that has credentials. You do NOT need to create `auth.setup.ts` manually.
 
