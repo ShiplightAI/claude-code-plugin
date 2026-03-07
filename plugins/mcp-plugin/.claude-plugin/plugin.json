@@ -4,8 +4,8 @@
   "version": "1.0.0",
   "mcpServers": {
     "browser": {
-      "command": "node",
-      "args": ["/Users/ayanbhowmick/Code/monots/apps/mcp-server/dist/index.js"],
+      "command": "npx",
+      "args": ["-y", "@shiplightai/mcp@latest"],
       "env": {
         "PWDEBUG" : "console"
       }
