@@ -361,11 +361,11 @@ curl -X POST -H "Authorization: Bearer $API_TOKEN" \
 
 ---
 
-## Reusable Steps (Templates)
+## Templates (Reusable Steps)
 
-Reusable test step sequences that can be referenced from test cases via `template:` in YAML or `reference_id` in the cloud.
+Reusable test step sequences that can be referenced from test cases via `template:` in YAML or `reference_id` in the cloud. The API uses the legacy name "reusable-steps".
 
-### Get Reusable Step
+### Get Template
 
 ```bash
 curl -H "Authorization: Bearer $API_TOKEN" \
@@ -374,7 +374,7 @@ curl -H "Authorization: Bearer $API_TOKEN" \
 
 **Response:** `{ id, name, description, statements }`
 
-### Create Reusable Step
+### Create Template
 
 ```bash
 curl -X POST -H "Authorization: Bearer $API_TOKEN" \
@@ -406,7 +406,7 @@ curl -X POST -H "Authorization: Bearer $API_TOKEN" \
 
 **Response:** `{ id, name, description, statements }`
 
-### Update Reusable Step
+### Update Template
 
 ```bash
 curl -X PUT -H "Authorization: Bearer $API_TOKEN" \
