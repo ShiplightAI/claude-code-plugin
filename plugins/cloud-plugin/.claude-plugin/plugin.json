@@ -1,6 +1,15 @@
 {
-  "name": "shiplight-cloud",
+  "name": "shiplight",
   "description": "Adds a /shiplight skill for cloud test case management — create, run, and manage tests via Shiplight API",
   "version": "1.0.0",
-  "homepage": "https://www.shiplight.ai"
+  "homepage": "https://www.shiplight.ai",
+  "mcpServers": {
+    "cloud": {
+      "command": "npx",
+      "args": ["-y", "@shiplightai/mcp@latest", "--cloud-only"],
+      "env": {
+        "API_TOKEN": ""
+      }
+    }
+  }
 }

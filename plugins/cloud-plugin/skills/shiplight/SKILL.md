@@ -82,67 +82,18 @@ curl -H "Authorization: Bearer $API_TOKEN" \
 
 **Response:** `{ id, title, test_flow, folder_id }`
 
-### Create Test Case
+### Create / Sync Test Case
 
-```bash
-curl -X POST -H "Authorization: Bearer $API_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "title": "Login Flow",
-    "test_flow": {
-      "version": "1.2.0",
-      "goal": "Verify user can log in",
-      "url": "https://app.example.com/login",
-      "statements": [
-        {
-          "uid": "step-1",
-          "type": "ACTION",
-          "description": "Enter email address",
-          "action_entity": {
-            "action_data": { "action_name": "input_text", "kwargs": { "value": "user@example.com" } },
-            "element_index": 0
-          }
-        }
-      ]
-    },
-    "folder_id": 1,
-    "environment_configs": [
-      {
-        "environment_id": 1,
-        "test_account_group": { "type": "None", "account_ids": [] },
-        "path": ""
-      }
-    ]
-  }' \
-  https://api.shiplight.ai/v1/test-cases
-```
+**Use the `save_test_case` MCP tool** instead of raw API calls. It handles YAML→JSON conversion, template resolution, and function linking automatically.
 
-**Request body:**
+### Update Test Case (partial)
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `title` | string | yes | Test case name |
-| `test_flow` | object | yes | TestFlow object (see schema below) |
-| `folder_id` | number | no | Folder to place test case in |
-| `environment_configs` | array | no | Environment + account configuration |
-
-`environment_configs` items:
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `environment_id` | number | Environment ID (use List Environments to find) |
-| `test_account_group.type` | `"None"` \| `"Specific"` \| `"Any"` | Account selection strategy |
-| `test_account_group.account_ids` | number[] | Account IDs (for `"Specific"` type) |
-| `path` | string | URL path appended to environment base URL |
-
-**Response:** `{ success, message, test_case_id, title, folder_id, created_at }`
-
-### Update Test Case
+For partial updates that don't involve `test_flow` (e.g. renaming), use the REST API directly:
 
 ```bash
 curl -X PUT -H "Authorization: Bearer $API_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"title": "Updated Login Flow", "test_flow": {...}}' \
+  -d '{"title": "Updated Login Flow"}' \
   https://api.shiplight.ai/v1/test-cases/123
 ```
 
@@ -151,7 +102,8 @@ curl -X PUT -H "Authorization: Bearer $API_TOKEN" \
 | Field | Type | Description |
 |-------|------|-------------|
 | `title` | string | New title |
-| `test_flow` | object | Updated TestFlow object |
+| `test_flow` | object | Updated TestFlow JSON object (use `save_test_case` MCP tool instead for YAML sources) |
+| `folder_id` | number | Move to a different folder |
 
 **Response:** `{ success, message, test_case_id, updated_at }`
 
@@ -374,48 +326,28 @@ curl -H "Authorization: Bearer $API_TOKEN" \
 
 **Response:** `{ id, name, description, statements }`
 
-### Create Template
+### Create / Sync Template
 
-```bash
-curl -X POST -H "Authorization: Bearer $API_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "reusableStepEntity": {
-      "name": "dismiss-popup",
-      "description": "Dismiss the promotional popup if visible",
-      "statements": [
-        {
-          "uid": "step-1",
-          "type": "IF",
-          "description": "Popup is visible",
-          "sub_statements": [...]
-        }
-      ]
-    }
-  }' \
-  https://api.shiplight.ai/v1/reusable-steps
-```
+**Use the `save_template` MCP tool** instead of raw API calls. It handles YAML→JSON conversion automatically.
 
-**Request body (`reusableStepEntity`):**
+### Update Template (partial)
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `name` | string | yes | Template name |
-| `description` | string | no | What the template does |
-| `statements` | array | yes | Statement objects (same format as test case statements) |
-
-**Response:** `{ id, name, description, statements }`
-
-### Update Template
+For partial updates that don't involve `statements` (e.g. renaming):
 
 ```bash
 curl -X PUT -H "Authorization: Bearer $API_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"name": "dismiss-popup", "description": "Updated", "statements": [...]}' \
+  -d '{"name": "dismiss-popup", "description": "Updated description"}' \
   https://api.shiplight.ai/v1/reusable-steps/138
 ```
 
-**Request body:** same fields as create (all optional for update)
+**Request body:** (all fields optional)
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` | string | Template name |
+| `description` | string | What the template does |
+| `statements` | array | Statement objects (use `save_template` MCP tool instead for YAML sources) |
 
 **Response:** `{ id, name, description, statements }`
 
@@ -434,43 +366,9 @@ curl -H "Authorization: Bearer $API_TOKEN" \
 
 **Response:** `{ id, name, description, code, status }`
 
-### Create Test Function
+### Create / Sync Test Function
 
-```bash
-curl -X POST -H "Authorization: Bearer $API_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "testFunctionEntity": {
-      "name": "getCartCount",
-      "description": "Returns the number of items in the shopping cart",
-      "code": "export async function getCartCount(page) {\n  return await page.locator('.cart-count').textContent();\n}",
-      "status": "Active"
-    }
-  }' \
-  https://api.shiplight.ai/v1/functions
-```
-
-**Request body (`testFunctionEntity`):**
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `name` | string | yes | Function name |
-| `description` | string | no | What the function does |
-| `code` | string | yes | TypeScript function body (exported functions) |
-| `status` | string | yes | Always `"Active"` |
-
-**Response:** `{ id, name, description, code, status }`
-
-### Update Test Function
-
-```bash
-curl -X PUT -H "Authorization: Bearer $API_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"name": "getCartCount", "description": "Updated", "code": "...", "status": "Active"}' \
-  https://api.shiplight.ai/v1/functions/42
-```
-
-**Request body:** same fields as create (all optional for update)
+**Use the `save_function` MCP tool** instead of raw API calls. It reads the TypeScript file, extracts exports and `@function_id` JSDoc tags, and creates/updates functions automatically.
 
 **Response:** `{ id, name, description, code, status }`
 
@@ -594,70 +492,16 @@ curl -H "Authorization: Bearer $API_TOKEN" \
 2. `POST /v1/test-batch-gen-tasks/create` → submit `title`, `startingUrl`, `goal`, `environmentId`, `testAccountGroup`, `creation_mode: "SINGLE"`
 3. Response contains `{ testCase: { id, test_flow } }` — run it or inspect the flow
 
-### Sync templates and functions to cloud
+### Sync local artifacts to cloud
 
-1. **Templates**: `POST /v1/reusable-steps` to create, `PUT /v1/reusable-steps/<id>` to update. Store the returned `id` as `template_id` in local YAML files for future updates.
-2. **Functions**: `POST /v1/functions` to create, `PUT /v1/functions/<id>` to update. Store the returned `id` as `@function_id <id>` JSDoc tag on exports for future updates.
-3. **Test cases** referencing templates use `reference_id` in STEP statements to link to cloud reusable steps.
+Use the MCP sync tools — they handle YAML→JSON conversion, ID tracking, and template resolution:
+
+1. **Test cases**: `save_test_case` MCP tool — pass the YAML content, it creates or updates based on `test_case_id` in the YAML metadata
+2. **Templates**: `save_template` MCP tool — pass the YAML content, it creates or updates based on `template_id` in the YAML metadata
+3. **Functions**: `save_function` MCP tool — pass the TypeScript file path, it extracts exports and syncs based on `@function_id` JSDoc tags
 
 ### Download test artifacts
 
 1. `GET /test-case-results/<id>` → find `video`, `trace`, or `report_s3_uri` fields (S3 URIs)
 2. `GET /v1/s3/file?uri=<S3_URI>` → download the artifact content
 
----
-
-## TestFlow Schema
-
-The `test_flow` object used in create/update test case:
-
-```yaml
-goal: Verify user can log in to dashboard
-statements:
-  - URL: https://app.example.com/login
-  - desc: Enter email address
-    action: input_text
-    locator: "getByRole('textbox', { name: 'Email' })"
-    text: user@example.com
-  - desc: Click the login button
-    js: "await page.getByRole('button', { name: 'Log in' }).first().click({ timeout: 5000 })"
-  - VERIFY: Dashboard is displayed
-# Optional: teardown section runs after test (same statement format)
-```
-
-### Required fields
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `goal` | string | What the test verifies |
-| `statements` | array | Test steps |
-
-### Statement types (YAML syntax)
-
-| Syntax | Description |
-|--------|-------------|
-| `desc:` + `js:` | ACTION with Playwright code cache (<1s, self-heals via desc) |
-| `desc:` + `action:` + `locator:` | ACTION in structured form (for `input_text`, `select_dropdown_option`, `upload_file`) |
-| `desc:` only | DRAFT — AI resolves at runtime (~5-10s, use sparingly) |
-| `VERIFY: <condition>` | Assertion, optionally with `js:` cache |
-| `URL: <url>` | Navigate to URL |
-| `CODE: <js>` | Inline Playwright code (no self-healing) |
-| `STEP: <label>` + nested `statements:` | Group of nested statements |
-| `IF:` + `THEN:` / `ELSE:` | Conditional branch |
-| `WHILE:` + `DO:` | Loop with timeout |
-
-### ACTION forms
-
-Prefer `js:` shorthand for clicks, keyboard, hover. Use structured `action:` for `input_text`, `select_dropdown_option`, `upload_file`, `scroll`.
-
-```yaml
-# js: shorthand (preferred for simple actions)
-- desc: Click the login button
-  js: "await page.getByRole('button', { name: 'Log in' }).first().click({ timeout: 5000 })"
-
-# Structured form (for actions with typed parameters)
-- desc: Enter email address
-  action: input_text
-  locator: "getByRole('textbox', { name: 'Email' })"
-  text: user@example.com
-```

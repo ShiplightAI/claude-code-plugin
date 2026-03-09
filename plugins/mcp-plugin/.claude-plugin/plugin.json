@@ -4,11 +4,10 @@
   "version": "1.0.0",
   "mcpServers": {
     "browser": {
-      "command": "node",
-      "args": ["/Users/feng/Shiplight/monots-harmony/apps/mcp-server/dist/index.js"],
+      "command": "npx",
+      "args": ["-y", "@shiplightai/mcp@latest"],
       "env": {
-        "PWDEBUG" : "console",
-        "API_TOKEN": "3cc85105-c673-4a74-8af4-19619c58832d"
+        "PWDEBUG" : "console"
       }
     }
   }
