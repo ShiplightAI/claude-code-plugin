@@ -361,6 +361,121 @@ curl -X POST -H "Authorization: Bearer $API_TOKEN" \
 
 ---
 
+## Reusable Steps (Templates)
+
+Reusable test step sequences that can be referenced from test cases via `template:` in YAML or `reference_id` in the cloud.
+
+### Get Reusable Step
+
+```bash
+curl -H "Authorization: Bearer $API_TOKEN" \
+  https://api.shiplight.ai/v1/reusable-steps/138
+```
+
+**Response:** `{ id, name, description, statements }`
+
+### Create Reusable Step
+
+```bash
+curl -X POST -H "Authorization: Bearer $API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "reusableStepEntity": {
+      "name": "dismiss-popup",
+      "description": "Dismiss the promotional popup if visible",
+      "statements": [
+        {
+          "uid": "step-1",
+          "type": "IF",
+          "description": "Popup is visible",
+          "sub_statements": [...]
+        }
+      ]
+    }
+  }' \
+  https://api.shiplight.ai/v1/reusable-steps
+```
+
+**Request body (`reusableStepEntity`):**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `name` | string | yes | Template name |
+| `description` | string | no | What the template does |
+| `statements` | array | yes | Statement objects (same format as test case statements) |
+
+**Response:** `{ id, name, description, statements }`
+
+### Update Reusable Step
+
+```bash
+curl -X PUT -H "Authorization: Bearer $API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "dismiss-popup", "description": "Updated", "statements": [...]}' \
+  https://api.shiplight.ai/v1/reusable-steps/138
+```
+
+**Request body:** same fields as create (all optional for update)
+
+**Response:** `{ id, name, description, statements }`
+
+---
+
+## Test Functions
+
+Custom TypeScript functions that can be called from test cases via `call: "file#export"` in YAML.
+
+### Get Test Function
+
+```bash
+curl -H "Authorization: Bearer $API_TOKEN" \
+  https://api.shiplight.ai/v1/functions/42
+```
+
+**Response:** `{ id, name, description, code, status }`
+
+### Create Test Function
+
+```bash
+curl -X POST -H "Authorization: Bearer $API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "testFunctionEntity": {
+      "name": "getCartCount",
+      "description": "Returns the number of items in the shopping cart",
+      "code": "export async function getCartCount(page) {\n  return await page.locator('.cart-count').textContent();\n}",
+      "status": "Active"
+    }
+  }' \
+  https://api.shiplight.ai/v1/functions
+```
+
+**Request body (`testFunctionEntity`):**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `name` | string | yes | Function name |
+| `description` | string | no | What the function does |
+| `code` | string | yes | TypeScript function body (exported functions) |
+| `status` | string | yes | Always `"Active"` |
+
+**Response:** `{ id, name, description, code, status }`
+
+### Update Test Function
+
+```bash
+curl -X PUT -H "Authorization: Bearer $API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "getCartCount", "description": "Updated", "code": "...", "status": "Active"}' \
+  https://api.shiplight.ai/v1/functions/42
+```
+
+**Request body:** same fields as create (all optional for update)
+
+**Response:** `{ id, name, description, code, status }`
+
+---
+
 ## Test Generation
 
 ### Generate Test from Goal
@@ -478,6 +593,12 @@ curl -H "Authorization: Bearer $API_TOKEN" \
 1. `GET /v1/environments` → get environment ID; optionally `GET /v1/test-accounts?environmentId=<id>` for account
 2. `POST /v1/test-batch-gen-tasks/create` → submit `title`, `startingUrl`, `goal`, `environmentId`, `testAccountGroup`, `creation_mode: "SINGLE"`
 3. Response contains `{ testCase: { id, test_flow } }` — run it or inspect the flow
+
+### Sync templates and functions to cloud
+
+1. **Templates**: `POST /v1/reusable-steps` to create, `PUT /v1/reusable-steps/<id>` to update. Store the returned `id` as `template_id` in local YAML files for future updates.
+2. **Functions**: `POST /v1/functions` to create, `PUT /v1/functions/<id>` to update. Store the returned `id` as `@function_id <id>` JSDoc tag on exports for future updates.
+3. **Test cases** referencing templates use `reference_id` in STEP statements to link to cloud reusable steps.
 
 ### Download test artifacts
 
