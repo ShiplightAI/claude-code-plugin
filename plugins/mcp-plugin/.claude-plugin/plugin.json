@@ -1,11 +1,11 @@
 {
   "name": "shiplight",
-  "description": "Adds a /verify skill for browser testing and local test verification",
+  "description": "Adds /verify and /create_yaml_tests skills for browser testing, local test verification, and YAML test authoring",
   "version": "1.0.0",
   "mcpServers": {
     "browser": {
-      "command": "npx",
-      "args": ["-y", "@shiplightai/mcp@latest"],
+      "command": "node",
+      "args": ["/Users/feng/Shiplight/monots-harmony/apps/mcp-server/dist/index.js"],
       "env": {
         "PWDEBUG" : "console"
       }

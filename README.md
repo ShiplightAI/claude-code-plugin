@@ -11,7 +11,7 @@ Browser automation MCP tools + UI verification skill.
 - **MCP tools** — live browser sessions, navigation, actions, page inspection, debugging
 - **Skills:**
   - `/verify` (aka `/shiplight-mcp:verify`) — verify UI changes in the browser using MCP tools
-  - `/create_tests` (aka `/shiplight-mcp:create_tests`) — scaffold a local test project, configure credentials, and write YAML tests by walking through the app in a browser
+  - `/create_yaml_tests` (aka `/shiplight-mcp:create_yaml_tests`) — scaffold a local test project, configure credentials, and write YAML tests by walking through the app in a browser
 
 ### cloud-plugin (paid)
 
