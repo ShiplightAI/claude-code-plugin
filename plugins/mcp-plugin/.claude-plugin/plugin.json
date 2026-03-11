@@ -1,6 +1,6 @@
 {
   "name": "shiplight",
-  "description": "Adds /verify and /create_yaml_tests skills for browser testing, local test verification, and YAML test authoring",
+  "description": "Adds /verify and /create_tests skills for browser testing, local test verification, and YAML test authoring",
   "version": "1.0.0",
   "mcpServers": {
     "browser": {

@@ -5,7 +5,7 @@
     {
       "name": "mcp-plugin",
       "source": "./plugins/mcp-plugin",
-      "description": "Adds /verify and /create_yaml_tests skills for browser testing, local test verification, and YAML test authoring"
+      "description": "Adds /verify and /create_tests skills for browser testing, local test verification, and YAML test authoring"
     },
     {
       "name": "cloud-plugin",

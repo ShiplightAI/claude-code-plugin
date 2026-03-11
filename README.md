@@ -11,7 +11,7 @@ Browser automation MCP tools + UI verification skill.
 - **MCP tools** — live browser sessions, navigation, actions, page inspection, debugging
 - **Skills:**
   - `/verify` (aka `/shiplight-mcp:verify`) — verify UI changes in the browser using MCP tools
-  - `/create_yaml_tests` (aka `/shiplight-mcp:create_yaml_tests`) — scaffold a local test project, configure credentials, and write YAML tests by walking through the app in a browser
+  - `/create_tests` (aka `/shiplight-mcp:create_tests`) — scaffold a local test project, configure credentials, and write YAML tests by walking through the app in a browser
 
 ### cloud-plugin (paid)
 
@@ -21,13 +21,17 @@ Cloud test case management via REST API.
 
 ## Install
 
+Add marketplace and install the plugin
 ```bash
-# Add marketplace and install the plugin
-claude plugin marketplace add ShiplightAI/claude-code-plugin && claude plugin install mcp-plugin@shiplight-plugins
+claude plugin marketplace add ShiplightAI/claude-code-plugin && claude plugin install --scope project mcp-plugin@shiplight-plugins
 ```
 
 After installation, exit and restart Claude Code for the plugins to take effect.
 
+To also install the cloud plugin (for syncing local regression tests to Shiplight cloud):
+```bash
+claude plugin install --scope project cloud-plugin@shiplight-plugins
+```
 ## Verify
 
 Run `/context` in Claude Code. You should see:
