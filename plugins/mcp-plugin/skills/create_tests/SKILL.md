@@ -126,42 +126,73 @@ These best practices bridge the YAML language spec and the action catalog to hel
 - **URL for navigation.** Use `URL: /path` for navigation instead of `action: go_to_url`.
 - **CODE for scripting.** Use `CODE:` for network mocking, localStorage manipulation, page-level scripting. Not for clicks, assertions, or navigation.
 
-### ACTION: `js:` shorthand vs structured format
+### The `intent` field
 
-Every ACTION has a `desc` (ground truth) and a cache (`js` or `action`/`locator`). When the cache fails, the agent self-heals using the description.
+`intent` is the **intent** of the step — it defines _what_ the step should accomplish. The `action`/`locator` or `js` fields are **caches** of _how_ to do it. When a cache fails (stale locator, changed DOM), the AI agent uses `intent` to re-inspect the page and regenerate the action from scratch.
 
-**Prefer `js:` shorthand** for simple actions — it's more readable, more flexible, and the agent writes exactly the Playwright code it wants:
+Because `intent` drives self-healing, it must be specific enough for an agent to act on without any other context:
+
+```yaml
+# BAD: vague, agent can't re-derive the action
+- intent: Click button
+  action: click
+  locator: "getByRole('button', { name: 'Submit' })"
+
+# GOOD: specific intent, agent knows exactly what to do
+- intent: Click the Submit button to save the new project
+  action: click
+  locator: "getByRole('button', { name: 'Submit' })"
+```
+
+### ACTION: structured format vs `js:` shorthand
+
+**Use structured format by default** for all supported actions. It's declarative, readable, and consistent with what `get_locators` and `act` return:
 
 ```yaml
 # Click
-- desc: Click the login button
-  js: "await page.getByRole('button', { name: 'Login' }).first().click({ timeout: 5000 })"
+- intent: Click the login button
+  action: click
+  locator: "getByRole('button', { name: 'Login' })"
 
 # Press key
-- desc: Press Escape to close dialog
-  js: "await page.keyboard.press('Escape')"
+- intent: Press Escape to close dialog
+  action: press
+  keys: Escape
 
 # Hover
-- desc: Hover over the menu
-  js: "await page.getByRole('navigation').first().hover({ timeout: 5000 })"
-```
+- intent: Hover over the menu
+  action: hover
+  locator: "getByRole('navigation')"
 
-**Do NOT use `action: click`**, `action: hover`, or `action: press` — use `js:` shorthand instead. These are simple Playwright one-liners that are more readable and flexible as `js:`.
-
-**Use structured format** for actions that plain Playwright code doesn't handle well: `input_text` (handles clearing/focusing), `select_dropdown_option` (handles option resolution), `upload_file` (handles file input), `scroll` (handles scroll logic).
-
-```yaml
-- desc: Enter email address
+# Input
+- intent: Enter email address
   action: input_text
   locator: "getByPlaceholder('Email')"
   text: "user@example.com"
+
+# Scroll
+- intent: Scroll down to see more results
+  action: scroll
+  down: true
+  num_pages: 1
+```
+
+**Use `js:` only when the action doesn't map to a supported action** — e.g., complex multi-step interactions, custom Playwright API calls, or chained operations:
+
+```yaml
+- intent: Drag slider to 50% position
+  js: "await page.getByRole('slider').first().fill('50')"
+
+- intent: Wait for network idle after form submit
+  js: "await page.waitForLoadState('networkidle')"
 ```
 
 ### `js:` coding rules
 
+- Only use `js:` when no supported action fits
 - Always resolve locators to a single element (e.g., `.first()`, `.nth(1)`) to avoid Playwright strict-mode errors
 - Always include `{ timeout: 5000 }` on actions for predictable timing
-- The `desc` is critical — it's the input for self-healing when `js` fails
+- The `intent` is critical — it's the input for self-healing when `js` fails
 - `page`, `agent`, and `expect` are available in scope
 - Do NOT include `xpath` when using `js:` — xpath is only needed when an ACTION has neither `locator` nor `js`
 
@@ -178,7 +209,7 @@ Every ACTION has a `desc` (ground truth) and a cache (`js` or `action`/`locator`
 ```yaml
 # BAD: hard sleep then verify
 - action: wait
-  desc: Wait for page to load
+  intent: Wait for page to load
   seconds: 3
 - VERIFY: Dashboard is loaded
   js: "await expect(page.getByTestId('dashboard')).toBeVisible({ timeout: 2000 })"
@@ -196,7 +227,7 @@ Every ACTION has a `desc` (ground truth) and a cache (`js` or `action`/`locator`
 
 ### General conventions
 
-- Put `desc` first in ACTION statements for readability
+- Put `intent` first in ACTION statements for readability
 - `xpath` is only needed when an ACTION has neither `locator` nor `js`.
 - Single-test vs Suite: isolated test → single-test file; shared setup/teardown → suite; serial execution (shared state) → suite with `serial: true`; same structure, different data → `parameters`
 
