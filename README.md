@@ -1,47 +1,36 @@
-# Shiplight Claude Code Plugins
+# Shiplight Claude Code Plugin
 
-AI-powered test automation for Claude Code — browser testing via MCP and cloud test management.
+AI-powered test automation for Claude Code — browser testing, local YAML test authoring, and cloud test management in a single plugin.
 
-## Plugins
+## Features
 
-### mcp-plugin (free)
-
-Browser automation MCP tools + UI verification skill.
-
-- **MCP tools** — live browser sessions, navigation, actions, page inspection, debugging
+- **MCP tools** — live browser sessions, navigation, actions, page inspection, debugging, and cloud sync
 - **Skills:**
-  - `/verify` (aka `/shiplight-mcp:verify`) — verify UI changes in the browser using MCP tools
-  - `/create_tests` (aka `/shiplight-mcp:create_tests`) — scaffold a local test project, configure credentials, and write YAML tests by walking through the app in a browser
+  - `/verify` — verify UI changes in the browser using MCP tools
+  - `/create_tests` — scaffold a local test project, configure credentials, and write YAML tests by walking through the app in a browser
+  - `/cloud` — create, run, and manage test cases, environments, folders, and accounts in the cloud
 
-### cloud-plugin (paid)
-
-Cloud test case management via REST API.
-
-- **Skill** — `/shiplight` (aka `/shiplight-cloud:shiplight`) — create, run, and manage test cases, environments, folders, and accounts
+Cloud tools (`save_test_case`, `get_test_case`, etc.) are automatically available when `SHIPLIGHT_API_TOKEN` is set in the project's `.env` file.
 
 ## Install
 
-Add marketplace and install the plugin
+Add marketplace and install the plugin:
 ```bash
 claude plugin marketplace add ShiplightAI/claude-code-plugin && claude plugin install --scope project mcp-plugin@shiplight-plugins
 ```
 
-After installation, exit and restart Claude Code for the plugins to take effect.
+After installation, exit and restart Claude Code for the plugin to take effect.
 
-To also install the cloud plugin (for syncing local regression tests to Shiplight cloud):
-```bash
-claude plugin install --scope project cloud-plugin@shiplight-plugins
-```
 ## Verify
 
 Run `/context` in Claude Code. You should see:
 
-- **MCP tools** (mcp-plugin only) — `plugin:shiplight-mcp:browser` tools
-- **Skills** — depends on which plugin you installed
+- **MCP tools** — `plugin:shiplight:shiplight` tools
+- **Skills** — `/verify`, `/create_tests`, `/cloud`
 
 ## Known Issues
 
-On first use, you may see a `readMcpResource` error like `Server "plugin_shiplight-mcp_browser" not found`. This is a benign Claude Code bug — it uses underscores instead of colons when resolving MCP resource names. The tool calls themselves work correctly. Simply retry the failed tool call and it will succeed.
+On first use, you may see a `readMcpResource` error like `Server "plugin_shiplight_shiplight" not found`. This is a benign Claude Code bug — it uses underscores instead of colons when resolving MCP resource names. The tool calls themselves work correctly. Simply retry the failed tool call and it will succeed.
 
 ## Links
 

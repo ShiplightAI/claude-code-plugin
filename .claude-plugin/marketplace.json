@@ -5,12 +5,7 @@
     {
       "name": "mcp-plugin",
       "source": "./plugins/mcp-plugin",
-      "description": "Adds /verify and /create_tests skills for browser testing, local test verification, and YAML test authoring"
-    },
-    {
-      "name": "cloud-plugin",
-      "source": "./plugins/cloud-plugin",
-      "description": "Adds a /shiplight-cloud skill for cloud test case management — create, run, and manage tests via Shiplight API"
+      "description": "Adds /verify, /create_tests, and /cloud skills for browser testing, YAML test authoring, and cloud test management"
     }
   ]
 }

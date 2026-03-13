@@ -5,11 +5,11 @@ description: "Verify UI changes in the browser using Shiplight MCP tools."
 
 # Verify UI Changes
 
-Use the `@shiplightai/mcp` browser tools to visually verify that your code changes look and behave correctly in a real browser.
+Use the Shiplight MCP browser tools to visually verify that your code changes look and behave correctly in a real browser.
 
 ## When to use
 
-Use `/shiplight-mcp:verify` after making UI changes to confirm they render correctly. This is useful for:
+Use `/shiplight:verify` after making UI changes to confirm they render correctly. This is useful for:
 - Checking layout, styling, or component changes visually
 - Verifying interactive behavior (clicks, form inputs, navigation)
 - Pre-commit sanity checks on UI work
@@ -17,7 +17,17 @@ Use `/shiplight-mcp:verify` after making UI changes to confirm they render corre
 
 ## Steps
 
-Use the MCP tools from `@shiplightai/mcp`. The following steps are a general guideline — adapt based on what makes sense for the specific changes:
+### 0. Check API keys
+
+Before starting, check that the user has at least one LLM API key (`ANTHROPIC_API_KEY` or `GOOGLE_API_KEY`) — these are required for browser actions. If not available, ask:
+
+> To verify UI changes, I need an Anthropic or Google API key. Do you have one?
+
+If provided, append it to the project's `.env` file (create if needed) and tell them: "Saved to `<project>/.env` — make sure `.env` is in your `.gitignore`." The MCP server must be reconnected (`/mcp`) for the new key to take effect.
+
+If the key is already working (e.g. `act` succeeds), skip this step.
+
+The following steps are a general guideline — adapt based on what makes sense for the specific changes:
 
 1. **Understand what changed** — this is the most important step as it determines your test coverage. Analyze the code changes and build a verification plan targeting the key areas, balancing thoroughness with cost.
 
