@@ -437,106 +437,85 @@ curl -X POST -H "Authorization: Bearer $SHIPLIGHT_API_TOKEN" \
 
 ### Agent Session Verification Report
 
-After a successful verification session where `record_video: true` was set, generate and upload a hosted HTML report that embeds the video inline. **Only do this on successful verification.** Share the `reportUrl` (not the raw video URL) in the PR description.
+After a successful verification session where `record_evidence: true` was set, generate a local HTML report the user can view, then optionally upload it to cloud for sharing. **Only do this on successful verification.**
 
-`close_session` returns both a `local_video_path` and a `local_trace_path` — both **must** be uploaded before generating the report. Follow Steps 1, 1b, 2, and 3 in order.
-
----
-
-#### Step 1 — Upload the video
-
-```bash
-# Get presigned upload URL
-curl -s -X POST \
-  -H "Authorization: Bearer $SHIPLIGHT_API_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"filename": "recording.webm"}' \
-  https://api.shiplight.ai/v1/agent/video-upload-url
-# → { uploadUrl, videoUrl }
-
-# Upload video
-curl -X PUT \
-  -H "Content-Type: video/webm" \
-  --upload-file "$LOCAL_VIDEO_PATH" \
-  "$UPLOAD_URL"
-```
-
-Save the returned `videoUrl` — it is the permanent public video URL used in the report.
+`close_session` returns `local_video_path` and `local_trace_path`. The local report works immediately without any upload.
 
 ---
 
-#### Step 1b — Upload the trace
+#### Step 1 — Generate local report (MCP tool)
 
-`close_session` also returns a `local_trace_path`. Upload it the same way as the video so the report can embed an "Open Trace Viewer" button via trace.playwright.dev.
-
-```bash
-# Get presigned upload URL for the trace
-curl -s -X POST \
-  -H "Authorization: Bearer $SHIPLIGHT_API_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"filename": "trace.zip"}' \
-  https://api.shiplight.ai/v1/agent/video-upload-url
-# → { uploadUrl, videoUrl }
-
-# Upload trace zip
-curl -X PUT \
-  -H "Content-Type: application/zip" \
-  --upload-file "$LOCAL_TRACE_PATH" \
-  "$UPLOAD_URL"
-```
-
-Construct the viewer URL from the returned `videoUrl`:
-```
-TRACE_URL="https://trace.playwright.dev/?trace=$TRACE_S3_URL"
-```
-
-Pass `TRACE_URL` as `trace_url` in Step 2. **Do NOT use `local_trace_path`** — that only stores the local path in the HTML for later use; it does not render the "Open Trace Viewer" button.
-
----
-
-#### Step 2 — Generate HTML report (MCP tool)
-
-Call `generate_report_html` with the verification results:
+Call `generate_html_report` with local paths so the report works immediately on disk:
 
 ```json
 {
-  "video_url": "<permanent video URL from Step 1>",
-  "trace_url": "https://trace.playwright.dev/?trace=<trace S3 URL from Step 1b>",
+  "session_id": "<session_id>",
+  "local_video_path": "<local_video_path from close_session>",
+  "local_trace_path": "<local_trace_path from close_session>",
   "title": "Todo App — Install MCP button",
-  "date": "March 4, 2026",
-  "steps": [
-    { "feature": "Install MCP button visible", "status": "pass" },
-    { "feature": "MCP server connects successfully", "status": "pass" }
+  "summary": "Verified the Install MCP button appears and opens the install dialog. All checks passed.",
+  "checks": [
+    { "description": "Install MCP button visible on dashboard", "passed": true, "step_indices": [2] },
+    { "description": "Install dialog opens on click", "passed": true, "step_indices": [4] }
   ]
 }
 ```
 
-The tool writes the HTML file and returns `{ success: true, file_path: "/tmp/report.html" }`. Use `file_path` in Step 3.
+The tool returns `{ file_path: "/tmp/report.html" }`. The user can open this file locally to review the report before sharing.
 
 ---
 
-#### Step 3 — Upload HTML report and get reportUrl
+#### Step 2 — Upload to cloud (optional, for sharing)
+
+Only do this if the user wants a shareable link (e.g. for a PR description).
 
 ```bash
-# Get presigned upload URL for the HTML file
-curl -s -X POST \
+# Get presigned upload URLs for all three files in one call
+URLS=$(curl -s -X POST \
   -H "Authorization: Bearer $SHIPLIGHT_API_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"filename": "report.html"}' \
-  https://api.shiplight.ai/v1/agent/video-upload-url
-# → { uploadUrl, videoUrl }  ← use videoUrl as reportUrl
+  -d '{
+    "video_filename": "recording.webm",
+    "trace_filename": "trace.zip",
+    "report_filename": "report.html"
+  }' \
+  https://api.shiplight.ai/v1/agent/report-upload-urls)
+# → { video: { uploadUrl, url }, trace: { uploadUrl, url }, report: { uploadUrl, url } }
 
-# Upload HTML (Content-Type must be text/html so S3 serves it as a web page)
-curl -X PUT \
-  -H "Content-Type: text/html" \
-  --upload-file "$FILE_PATH" \
-  "$UPLOAD_URL"
+# Upload video and trace in parallel
+curl -X PUT -H "Content-Type: video/webm" --upload-file "$LOCAL_VIDEO_PATH" "$VIDEO_UPLOAD_URL" &
+curl -X PUT -H "Content-Type: application/zip" --upload-file "$LOCAL_TRACE_PATH" "$TRACE_UPLOAD_URL" &
+wait
 ```
 
-The `videoUrl` from this response is the permanent `reportUrl`. Embed it in the PR description:
+---
+
+#### Step 3 — Regenerate report with cloud URLs, then upload HTML
+
+Call `generate_html_report` again, this time with cloud URLs so the video and trace viewer work when hosted:
+
+```json
+{
+  "session_id": "<session_id>",
+  "video_url": "<video.url from Step 2>",
+  "trace_url": "https://trace.playwright.dev/?trace=<trace.url from Step 2>",
+  "title": "Todo App — Install MCP button",
+  "summary": "...",
+  "checks": [...]
+}
+```
+
+Then upload the regenerated HTML:
+
+```bash
+# Content-Type must be text/html so S3 serves it as a web page
+curl -X PUT -H "Content-Type: text/html" --upload-file "$FILE_PATH" "$REPORT_UPLOAD_URL"
+```
+
+The `report.url` from Step 2 is the permanent `reportUrl`. Embed it in the PR description:
 
 ```
-📋 [Verification report]($REPORT_URL)
+[Verification report]($REPORT_URL)
 ```
 
 ---
