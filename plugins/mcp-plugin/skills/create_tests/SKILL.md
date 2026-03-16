@@ -86,6 +86,23 @@ import { authenticator } from 'otplib';
 const code = authenticator.generate(process.env.MY_APP_TOTP_SECRET!);
 ```
 
+**c. Sync the test account to cloud (if `SHIPLIGHT_API_TOKEN` is set).** After running auth setup locally (`npx playwright test --project=<app>-setup`), sync the generated storage state to cloud so cloud runs can authenticate without replaying the login flow:
+
+1. Call `GET /v1/test-accounts?environmentId=<id>` to check if an account already exists for this username/environment.
+2. If one exists, call `save_test_account` with its `test_account_id` to update it (this uploads the fresh `storage_state_path` without creating a duplicate).
+3. If none exists, call `save_test_account` without an ID to create a new one.
+
+```
+save_test_account(
+  test_account_id: <existing id, if found>,   // omit if creating new
+  username: <username from .env>,
+  password: <password from .env>,
+  name: "<App> Test Account",
+  environmentId: <id from GET /v1/environments>,
+  storage_state_path: "tests/<app>/.auth/storage-state.json"
+)
+```
+
 ### 6. Write YAML tests
 
 For each test the user wants to create:
