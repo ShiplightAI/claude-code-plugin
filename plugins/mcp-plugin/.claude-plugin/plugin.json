@@ -1,13 +1,14 @@
 {
   "name": "shiplight",
-  "description": "Adds a /verify skill for browser testing and local test verification",
+  "description": "Adds /verify, /create_tests, and /cloud skills for browser testing, YAML test authoring, and cloud test management",
   "version": "1.0.0",
+  "homepage": "https://www.shiplight.ai",
   "mcpServers": {
-    "browser": {
+    "shiplight": {
       "command": "npx",
       "args": ["-y", "@shiplightai/mcp@latest"],
       "env": {
-        "PWDEBUG" : "console"
+        "PWDEBUG": "console"
       }
     }
   }
