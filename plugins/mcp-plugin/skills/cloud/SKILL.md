@@ -439,7 +439,7 @@ curl -X POST -H "Authorization: Bearer $SHIPLIGHT_API_TOKEN" \
 
 After a successful verification session where `record_video: true` was set, generate and upload a hosted HTML report that embeds the video inline. **Only do this on successful verification.** Share the `reportUrl` (not the raw video URL) in the PR description.
 
-`close_session` returns a `local_video_path` — use it in Step 1.
+`close_session` returns both a `local_video_path` and a `local_trace_path` — both **must** be uploaded before generating the report. Follow Steps 1, 1b, 2, and 3 in order.
 
 ---
 
@@ -465,6 +465,35 @@ Save the returned `videoUrl` — it is the permanent public video URL used in th
 
 ---
 
+#### Step 1b — Upload the trace
+
+`close_session` also returns a `local_trace_path`. Upload it the same way as the video so the report can embed an "Open Trace Viewer" button via trace.playwright.dev.
+
+```bash
+# Get presigned upload URL for the trace
+curl -s -X POST \
+  -H "Authorization: Bearer $SHIPLIGHT_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"filename": "trace.zip"}' \
+  https://api.shiplight.ai/v1/agent/video-upload-url
+# → { uploadUrl, videoUrl }
+
+# Upload trace zip
+curl -X PUT \
+  -H "Content-Type: application/zip" \
+  --upload-file "$LOCAL_TRACE_PATH" \
+  "$UPLOAD_URL"
+```
+
+Construct the viewer URL from the returned `videoUrl`:
+```
+TRACE_URL="https://trace.playwright.dev/?trace=$TRACE_S3_URL"
+```
+
+Pass `TRACE_URL` as `trace_url` in Step 2. **Do NOT use `local_trace_path`** — that only stores the local path in the HTML for later use; it does not render the "Open Trace Viewer" button.
+
+---
+
 #### Step 2 — Generate HTML report (MCP tool)
 
 Call `generate_report_html` with the verification results:
@@ -472,6 +501,7 @@ Call `generate_report_html` with the verification results:
 ```json
 {
   "video_url": "<permanent video URL from Step 1>",
+  "trace_url": "https://trace.playwright.dev/?trace=<trace S3 URL from Step 1b>",
   "title": "Todo App — Install MCP button",
   "date": "March 4, 2026",
   "steps": [
