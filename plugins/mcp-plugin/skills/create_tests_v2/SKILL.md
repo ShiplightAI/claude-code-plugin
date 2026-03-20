@@ -15,64 +15,81 @@ Use `/shiplight:create_tests_v2` when the user wants to:
 - Set up authentication for a test project
 - Plan what to test before writing tests
 
+## Principles
+
+1. **Always produce artifacts.** Every phase writes a markdown file. Artifacts clarify your own thinking, give the user something to review, and guide later phases. Never skip artifact generation — only skip asking the user questions when the input already provides the answers.
+
+2. **Confirm before implementing.** Always present the spec (Phase 2 checkpoint) for user confirmation before spending time on browser-walking and test writing. Even when the user provides detailed requirements, echo them back as structured scenarios to catch mismatches early.
+
+3. **Each phase reads the previous phase's artifact.** This is the data flow — Discover feeds Specify, Specify feeds Plan, Plan feeds Implement, Implement feeds Verify. If an artifact exists from a prior run, offer to reuse it.
+
+4. **Escalate, don't loop.** When something fails or is ambiguous, report it and ask the user rather than retrying silently.
+
 ## Phase Overview
 
 ```
-Phase 1: Discover  → test-specs/test-strategy.md   (understand the app & user goals)
-Phase 2: Specify   → test-specs/test-spec.md        (define what to test in Given/When/Then)
-Phase 3: Clarify   → updates test-spec.md      (surface testing-specific unknowns)
-Phase 4: Plan      → test-specs/test-plan.md        (prioritize, structure, per-test guidance)
-Phase 5: Implement → *.test.yaml files         (write tests, guided by plan)
+Phase 1: Discover  → test-strategy.md    (understand the app & user goals)
+Phase 2: Specify   → test-spec.md        (define what to test in Given/When/Then)
+Phase 3: Plan      → test-plan.md        (prioritize, structure, per-test guidance)
+Phase 4: Implement → *.test.yaml files   (setup project, write tests, run them)
+Phase 5: Verify    → updated spec files  (coverage check, reconcile spec ↔ tests)
 ```
 
-## Skip / Fast-Track
+## Fast-Track
 
-Before starting, check for existing artifacts and user intent:
+Before starting, check for existing artifacts and explicit user intent:
 
-| User says | Behavior |
+| Situation | Behavior |
 |-----------|----------|
-| "skip to implement" / "just write the tests" | Phase 5 only (original unguided flow) |
-| "skip clarify" | Phases 1→2→4→5 |
-| Existing `test-specs/test-strategy.md` found | Offer to skip Phase 1 |
-| Existing `test-specs/test-spec.md` found | Offer to skip Phases 1-2 |
-| Existing `test-specs/test-plan.md` found | Offer to skip to Phase 5 |
+| "skip to implement" / "just write the tests" | Phase 4 only, no spec artifacts |
+| Existing `test-specs/test-strategy.md` | Offer to reuse, skip Phase 1 |
+| Existing `test-specs/test-spec.md` | Offer to reuse, skip Phases 1-2 |
+| Existing `test-specs/test-plan.md` | Offer to reuse, skip to Phase 4 |
 
 ---
 
-## Phase 1: Discover (Adaptive Intake)
+## Before you begin
+
+Ask the user for the **project path** — where to create the test project (e.g., `./my-tests`). All artifacts and tests will live here. Create the `test-specs/` directory immediately.
+
+If cloud MCP tools are available (`SHIPLIGHT_API_TOKEN` is set), use the `/shiplight:cloud` skill to fetch environments and test accounts — this can pre-fill the target URL and credentials.
+
+---
+
+## Phase 1: Discover
 
 **Goal:** Understand the application, the user's role, and what matters most to test.
 
-**Output:** `test-specs/test-strategy.md`
+**Output:** `<project>/test-specs/test-strategy.md`
 
 ### Steps
 
-1. **Get project path** — ask the user where to create the test project (e.g., `./my-tests`). All spec artifacts and tests will be written here. Create the `test-specs/` directory inside this path immediately.
-
-2. **Silent scan** — before asking questions, gather context from what's available:
+1. **Silent scan** — before asking questions, gather context from what's available:
    - Codebase: routes, components, `package.json`, framework
    - Git branch diff (what changed recently)
    - Existing tests (what's already covered)
    - PRDs, docs, README files
    - Cloud environments (if cloud MCP tools available)
 
-3. **Open question** — ask the user:
+2. **Open question** — ask the user:
    > What would you like to test?
 
-4. **Classify context** — based on the user's response, determine their persona:
+3. **Classify context** — based on the user's response, determine their persona:
    - **Developer + codebase**: has the code, wants tests for their changes
    - **QA + scenarios**: knows what to test, wants it automated
    - **PM + PRD**: has requirements, wants coverage
    - **URL-only**: just has a URL, needs guidance on everything
 
-5. **Ask 3-5 targeted questions** — ask one at a time, each with a recommendation based on your scan. Cover:
+4. **Targeted questions** — ask 3-5 questions, one at a time, each with a recommendation based on your scan. Cover:
    - Risk areas (what breaks would hurt most?)
    - User roles and permissions
    - Authentication requirements
    - Data strategy (test data creation, cleanup)
    - Critical user journeys
 
-6. **Write `test-strategy.md`** — save to `<project>/test-specs/test-strategy.md` containing:
+   If the user already provided detailed requirements, skip questions that are already answered — but still write the strategy.
+
+5. **Write `test-strategy.md`** containing:
    - **App profile**: name, URL, framework, key pages/features
    - **Risk profile**: what matters most, what's fragile
    - **Testing scope**: what's in/out, user roles to cover
@@ -81,13 +98,13 @@ Before starting, check for existing artifacts and user intent:
 
 ---
 
-## Phase 2: Specify (Define What to Test)
+## Phase 2: Specify
 
-**Goal:** Define concrete test scenarios in structured Given/When/Then format, prioritized by risk.
+**Goal:** Define concrete test scenarios in structured Given/When/Then format, prioritized by risk. Surface ambiguities that would cause flaky or incomplete tests.
 
 **Input:** reads `test-specs/test-strategy.md`
 
-**Output:** `test-specs/test-spec.md`
+**Output:** `<project>/test-specs/test-spec.md`
 
 ### Steps
 
@@ -101,60 +118,44 @@ Before starting, check for existing artifacts and user intent:
    - **Edge cases**: at least 2 per journey (e.g., invalid input, timeout, empty state)
    - **Data requirements**: what test data is needed
 
-3. **Write `test-spec.md`** — save to `<project>/test-specs/test-spec.md` with all journey specs.
-
-4. **Checkpoint** — present a summary table to the user for review:
-
-   | # | Journey | Priority | Happy Path Steps | Edge Cases |
-   |---|---------|----------|-----------------|------------|
-   | 1 | User signup | P0 | 5 | 3 |
-   | 2 | ... | ... | ... | ... |
-
-   Ask: "Does this look right? Any journeys to add, remove, or reprioritize?"
-
----
-
-## Phase 3: Clarify (Surface Unknowns) — skippable
-
-**Goal:** Proactively surface testing-specific ambiguities that would cause flaky or incomplete tests.
-
-**Input:** reads `test-specs/test-spec.md`
-
-### Steps
-
-1. **Ambiguity scan** — review the spec for unknowns across these 8 categories:
+3. **Ambiguity scan** — review each journey for testing-specific risks:
    - **Data dependencies**: does the test rely on specific data existing? Can it create its own?
-   - **Timing / async**: are there loading spinners, animations, or background processes to wait for?
-   - **Dynamic content**: dates, random IDs, user-generated content that changes between runs?
+   - **Timing / async**: loading spinners, animations, background processes to wait for?
+   - **Dynamic content**: dates, random IDs, content that changes between runs?
    - **Auth boundaries**: does the test cross permission levels or require multiple users?
    - **Third-party dependencies**: payment processors, email services, OAuth providers?
    - **State isolation**: does one test's data affect another? Cleanup needed?
    - **Flakiness risks**: race conditions, viewport-dependent behavior, network sensitivity?
-   - **Environment variance**: does behavior differ between staging/prod? Feature flags?
+   - **Environment variance**: behavior differences between staging/prod? Feature flags?
 
-2. **Ask up to 5 questions** — one at a time, each with:
-   - The specific ambiguity found
-   - A recommended answer (your best guess based on context)
-   - An impact statement (what happens if this isn't addressed)
+   Add a **Testing Notes** section to each journey with identified risks and recommended mitigations. If any ambiguities require user input, ask (one at a time, with a recommended answer and impact statement).
 
-   Example:
-   > The "checkout" journey expects a product in the cart, but I don't see a data setup step. **Recommendation:** Add a precondition that navigates to a product page and adds it to cart. **Impact:** Without this, the test will fail if the cart is empty from a previous test run.
+4. **Write `test-spec.md`** with all journey specs.
 
-3. **Update `test-spec.md`** — add a "Clarifications" section at the end with resolved answers.
+5. **Checkpoint** — present a summary table for user review:
+
+   | # | Journey | Priority | Steps | Edge Cases | Risks |
+   |---|---------|----------|-------|------------|-------|
+   | 1 | User signup | P0 | 5 | 3 | Timing |
+   | 2 | ... | ... | ... | ... | ... |
+
+   Ask: "Does this look right? Any journeys to add, remove, or reprioritize?"
+
+   **Wait for user confirmation before proceeding.**
 
 ---
 
-## Phase 4: Plan (Prioritize & Structure) — skippable
+## Phase 3: Plan
 
 **Goal:** Create an actionable implementation plan with per-test guidance.
 
 **Input:** reads `test-specs/test-spec.md`
 
-**Output:** `test-specs/test-plan.md`
+**Output:** `<project>/test-specs/test-plan.md`
 
 ### Steps
 
-1. **Read** `test-spec.md` (including any clarifications from Phase 3).
+1. **Read** `test-spec.md`.
 
 2. **Define test file structure** — map journeys to test files:
    ```
@@ -177,84 +178,67 @@ Before starting, check for existing artifacts and user intent:
    - **Wait strategy**: where to use WAIT_UNTIL vs WAIT, expected loading points
    - **Flakiness risks**: specific things to watch for in this test
 
-5. **Write `test-plan.md`** — save to `<project>/test-specs/test-plan.md`.
+5. **Write `test-plan.md`**.
 
-6. **Checkpoint** — present summary to user:
+6. **Checkpoint** — present summary:
    > Ready to implement **N** test files with ~**M** total statements. Shall I proceed?
 
 ---
 
-## Phase 5: Implement
+## Phase 4: Implement
 
-Write the actual YAML tests. If a `test-plan.md` exists, follow its per-test guidance. Otherwise, fall back to the original unguided flow.
+**Goal:** Set up the project and write all YAML tests guided by the plan.
 
-**This phase has two parts: Setup (get the project ready) then Write Tests (the core task). Setup is only needed once — the real work is writing tests. Do NOT stop after setup.**
+**Input:** reads `test-specs/test-plan.md` (if absent, falls back to unguided flow)
 
-### Part A: Project Setup
+### Setup
 
-Skip any steps that are already done (project exists, deps installed, auth configured).
+Skip any steps already done (project exists, deps installed, auth configured).
 
-**A1. Check API keys** — ensure the user has `ANTHROPIC_API_KEY` or `GOOGLE_API_KEY` for browser actions. If the key is already available (e.g. `act` tool works without error), skip this. Otherwise ask:
+1. **Check API keys** — ensure the user has `ANTHROPIC_API_KEY` or `GOOGLE_API_KEY` for browser actions. If not available, ask for one and save to `.env`.
 
-> To create tests, I need an Anthropic or Google API key for AI-powered browser interactions. Do you have one of these?
+2. **Scaffold the project** — call `scaffold_project` with the absolute project path. This creates `package.json`, `playwright.config.ts`, `.env.example`, `.gitignore`, and `tests/`. Save the API key to `.env`.
 
-If provided, save it to the project's `.env` file (create if needed) and tell them: "Saved to `<project>/.env` — make sure `.env` is in your `.gitignore`." The MCP server must be reconnected (`/mcp`) for new keys to take effect.
+3. **Install dependencies**:
+   ```bash
+   npm install
+   npx playwright install chromium
+   ```
 
-**A2. Gather project info** — ask the user for:
-- **Project path** — where to create the project (e.g., `./my-tests`)
-- **Target URL** — the web app to test (e.g., `https://app.example.com`)
-- **Login credentials** (if the app requires authentication) — URL, username, password, etc
+4. **Set up authentication (if needed)** — follow the standard [Playwright authentication pattern](https://playwright.dev/docs/auth).
 
-**Cloud shortcut:** If cloud MCP tools are available (i.e. `SHIPLIGHT_API_TOKEN` is set), use the `/shiplight:cloud` skill to fetch environments and test accounts from the cloud — this can pre-fill the target URL and login credentials, saving the user from entering them manually.
+   Add credentials as variables in `playwright.config.ts`:
 
-**A3. Scaffold the project** — call `scaffold_project` with the absolute project path. This creates:
-- `package.json` with `shiplightai` and `@playwright/test`
-- `playwright.config.ts` with `shiplightConfig()`
-- `.env.example` with placeholder API keys
-- `.gitignore` and `tests/` directory
+   ```ts
+   {
+     name: 'my-app',
+     testDir: './tests/my-app',
+     dependencies: ['my-app-setup'],
+     use: {
+       baseURL: 'https://app.example.com',
+       storageState: 'tests/my-app/.auth/storage-state.json',
+       variables: {
+         username: process.env.MY_APP_EMAIL,
+         password: { value: process.env.MY_APP_PASSWORD, sensitive: true },
+         // otp_secret_key: { value: process.env.MY_APP_TOTP_SECRET, sensitive: true },
+       },
+     },
+   },
+   ```
 
-Save the API key from step A1 to the project's `.env` file.
+   Standard variable names: `username`, `password`, `otp_secret_key`. Use `{ value, sensitive: true }` for secrets. Add values to `.env`.
 
-**A4. Install dependencies** — run in the project directory:
+   Write `auth.setup.ts` with standard Playwright login code. For TOTP:
+   ```ts
+   import { authenticator } from 'otplib';
+   const code = authenticator.generate(process.env.MY_APP_TOTP_SECRET!);
+   ```
 
-```bash
-npm install
-npx playwright install chromium
-```
+   **Verify auth works before writing any tests.** Run `npx shiplight test --headed` to execute just the auth setup — confirm it logs in and saves `storage-state.json`. If it fails, stop and ask the user for help. Auth is a prerequisite for everything else; do not proceed until it passes.
 
-**A5. Set up authentication (if needed)** — if the app requires login, follow the standard [Playwright authentication pattern](https://playwright.dev/docs/auth).
+   If the test plan involves special auth requirements (e.g., one account per test, multiple roles, per-test login), confirm the auth strategy with the user before proceeding.
 
-Add credentials as variables in `playwright.config.ts` using these standard names:
-
-```ts
-{
-  name: 'my-app',
-  testDir: './tests/my-app',
-  dependencies: ['my-app-setup'],
-  use: {
-    baseURL: 'https://app.example.com',
-    storageState: 'tests/my-app/.auth/storage-state.json',
-    variables: {
-      username: process.env.MY_APP_EMAIL,
-      password: { value: process.env.MY_APP_PASSWORD, sensitive: true },
-      // otp_secret_key: { value: process.env.MY_APP_TOTP_SECRET, sensitive: true },
-    },
-  },
-},
-```
-
-Standard variable names: `username`, `password`, `otp_secret_key`. Use `{ value, sensitive: true }` for secrets so they are masked in logs. Add the actual values to `.env`.
-
-Write `auth.setup.ts` with standard Playwright code (fill fields, click submit, save storage state). For apps that require 2FA/TOTP, the `otplib` package can generate time-based codes:
-
-```ts
-import { authenticator } from 'otplib';
-const code = authenticator.generate(process.env.MY_APP_TOTP_SECRET!);
-```
-
-### Part B: Write Tests ← this is the core task, do NOT skip
-
-**Once setup is complete, immediately proceed to writing tests. Do not stop, summarize, or ask permission to continue.**
+### Write tests
 
 For each test in the plan (or each test the user wants):
 
@@ -267,61 +251,62 @@ For each test in the plan (or each test the user wants):
 
 **Important:** Do NOT write YAML tests from imagination. Always walk through the app in a browser session first to capture real locators. Tests without locators are rejected by `validate_yaml_test`.
 
-**Plan-guided enhancement:** If `test-plan.md` exists, use its per-test guidance:
+When guided by `test-plan.md`:
 - Follow the recommended statement types and counts
 - Apply the specified wait strategy at loading points
-- Test the edge cases and assertions defined in the spec
-- After each test file, validate against the spec: are all specified scenarios covered?
+- Cover the edge cases and assertions defined in the spec
 
-### Part C: Verify and fix — always run this
+### Run tests
 
-**After writing tests, always run them. Do not stop or summarize before running.**
+After writing all tests, run them:
 
 ```bash
 npx shiplight test --headed
 ```
 
-**When a test fails, follow this protocol:**
+**When a test fails:**
 
 1. **Report** — tell the user which test failed and why (one sentence).
 2. **Classify** the failure:
-   - **Implementation fix** (wrong locator, missing wait, timing issue) → fix the test and retry. Maximum **2 retry attempts** per test.
-   - **Spec mismatch** (the app doesn't behave as the spec describes) → stop and ask the user: "The app does X but the spec says Y. Should I update the spec and adjust the test, or skip this scenario?"
-3. **Escalate after 2 retries** — if a test still fails after 2 fix attempts, stop and ask:
+   - **Implementation fix** (wrong locator, missing wait, timing) → fix and retry. Maximum **2 retries** per test.
+   - **Spec mismatch** (app behavior differs from spec) → ask the user whether to update the spec or skip the scenario.
+3. **Escalate after 2 retries** — stop and ask:
    > Test [name] is failing because [reason]. Want me to adjust the test, skip it, or try a different approach?
 
-**Do not silently retry more than twice.** The user should always know what's happening.
+---
 
-**Coverage summary (plan-guided only):** If a `test-spec.md` exists, present a final coverage summary table:
+## Phase 5: Verify
+
+**Goal:** Validate test coverage against the spec and reconcile any drift.
+
+**Input:** reads `test-specs/test-spec.md`, `test-specs/test-plan.md`, and all `.test.yaml` files
+
+This phase only runs when spec artifacts exist. Skip if Phase 4 ran unguided.
+
+### Coverage check
+
+For each spec journey, confirm the test covers the happy path and all listed edge cases.
+
+Present a coverage summary:
 
 | Spec Journey | Priority | Scenarios Specified | Tests Written | Coverage |
 |-------------|----------|--------------------:|-------------:|----------|
 | User signup | P0 | 4 | 4 | ✓ |
-| Checkout | P0 | 3 | 3 | ✓ |
-| ... | ... | ... | ... | ... |
+| Checkout | P0 | 3 | 2 | ✗ — edge case "empty cart" not covered |
 
-Flag any spec scenarios that were not covered and explain why.
+Flag gaps and extras (test steps not in the spec).
 
-### Part D: Verify against spec (plan-guided only)
+### Reconcile
 
-After all tests pass, do a read-only check of every test file against `test-spec.md`:
+Update spec artifacts to match what was actually implemented:
 
-- For each spec journey, confirm the test covers the **happy path** and all listed **edge cases**
-- Flag gaps: scenarios in the spec that have no corresponding YAML statements
-- Flag extras: test steps that aren't in the spec (not necessarily wrong — but worth noting)
+1. **Update `test-spec.md`** — mark skipped scenarios with reason, add scenarios that emerged during implementation, update edge cases to reflect what was tested
+2. **Update `test-plan.md`** — correct statement counts, update file structure, note deviations from the original plan
+3. **Show diff summary** — tell the user what changed and why
 
-Present findings to the user. Do not modify any files in this step.
+This keeps artifacts accurate for future test maintenance and expansion.
 
-### Part E: Reconcile spec artifacts (plan-guided only)
-
-During implementation, the spec will have drifted — skipped scenarios, changed approaches, user-resolved mismatches. Update the spec artifacts to match what was actually written:
-
-1. **Read** all `.test.yaml` files and compare against `test-spec.md` and `test-plan.md`
-2. **Update `test-spec.md`** — mark skipped scenarios as "Skipped" with reason, add any new scenarios that emerged during implementation, update edge cases to reflect what was actually tested
-3. **Update `test-plan.md`** — correct statement counts, update file structure, note any deviations from the original plan
-4. **Show diff summary** — tell the user what changed and why
-
-This keeps the spec artifacts accurate for future test maintenance and expansion.
+---
 
 ## YAML Format Reference
 
@@ -424,10 +409,10 @@ Default timeout is 60 seconds. Each AI condition check takes 10–15 seconds, so
 
 ```
 my-tests/
-├── test-specs/                   # Spec-driven planning artifacts
+├── test-specs/                   # Spec artifacts (version-controlled)
 │   ├── test-strategy.md          # Phase 1: app & risk profile
-│   ├── test-spec.md              # Phase 2: Given/When/Then specs
-│   └── test-plan.md              # Phase 4: implementation plan
+│   ├── test-spec.md              # Phase 2: Given/When/Then scenarios
+│   └── test-plan.md              # Phase 3: implementation plan
 │
 ├── playwright.config.ts
 ├── package.json
