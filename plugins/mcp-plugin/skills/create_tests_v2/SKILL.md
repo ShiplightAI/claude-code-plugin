@@ -17,11 +17,11 @@ Use `/shiplight:create_tests_v2` when the user wants to:
 
 ## Principles
 
-1. **Always produce artifacts.** Every phase writes a markdown file. Artifacts clarify your own thinking, give the user something to review, and guide later phases. Never skip artifact generation — only skip asking the user questions when the input already provides the answers.
+1. **Always produce artifacts.** Every phase writes a markdown file. Artifacts clarify your own thinking, give the user something to review, and guide later phases. When the user provides detailed requirements, use them as source material — skip questions already answered, but still produce the artifact.
 
-2. **Confirm before implementing.** Always present the spec (Phase 2 checkpoint) for user confirmation before spending time on browser-walking and test writing. Even when the user provides detailed requirements, echo them back as structured scenarios to catch mismatches early.
+2. **Confirm before implementing.** Present the spec (Phase 2 checkpoint) for user confirmation before spending time on browser-walking and test writing. Echo back your understanding as structured scenarios to catch mismatches early.
 
-3. **Each phase reads the previous phase's artifact.** This is the data flow — Discover feeds Specify, Specify feeds Plan, Plan feeds Implement, Implement feeds Verify. If an artifact exists from a prior run, offer to reuse it.
+3. **Each phase reads the previous phase's artifact.** Discover feeds Specify, Specify feeds Plan, Plan feeds Implement, Implement feeds Verify. If an artifact exists from a prior run, offer to reuse it.
 
 4. **Escalate, don't loop.** When something fails or is ambiguous, report it and ask the user rather than retrying silently.
 
@@ -37,22 +37,14 @@ Phase 5: Verify    → updated spec files  (coverage check, reconcile spec ↔ t
 
 ## Fast-Track
 
-Before starting, check for existing artifacts and explicit user intent:
+Check for existing artifacts before starting. The only way to skip artifact generation is if the user **explicitly** says so.
 
 | Situation | Behavior |
 |-----------|----------|
-| "skip to implement" / "just write the tests" | Phase 4 only, no spec artifacts |
+| User explicitly says "skip to implement" or "just write the tests" | Phase 4 only |
 | Existing `test-specs/test-strategy.md` | Offer to reuse, skip Phase 1 |
 | Existing `test-specs/test-spec.md` | Offer to reuse, skip Phases 1-2 |
 | Existing `test-specs/test-plan.md` | Offer to reuse, skip to Phase 4 |
-
----
-
-## Before you begin
-
-Ask the user for the **project path** — where to create the test project (e.g., `./my-tests`). All artifacts and tests will live here. Create the `test-specs/` directory immediately.
-
-If cloud MCP tools are available (`SHIPLIGHT_API_TOKEN` is set), use the `/shiplight:cloud` skill to fetch environments and test accounts — this can pre-fill the target URL and credentials.
 
 ---
 
@@ -64,32 +56,20 @@ If cloud MCP tools are available (`SHIPLIGHT_API_TOKEN` is set), use the `/shipl
 
 ### Steps
 
-1. **Silent scan** — before asking questions, gather context from what's available:
+1. **Get project path** — ask where to create the test project (e.g., `./my-tests`). All artifacts and tests will live here. Create the `test-specs/` directory.
+
+   If cloud MCP tools are available (`SHIPLIGHT_API_TOKEN` is set), use the `/shiplight:cloud` skill to fetch environments and test accounts — this can pre-fill the target URL and credentials.
+
+2. **Silent scan** — before asking questions, gather context from what's available:
    - Codebase: routes, components, `package.json`, framework
    - Git branch diff (what changed recently)
    - Existing tests (what's already covered)
    - PRDs, docs, README files
    - Cloud environments (if cloud MCP tools available)
 
-2. **Open question** — ask the user:
-   > What would you like to test?
+3. **Understand what to test** — ask the user what they'd like to test, then ask targeted follow-up questions (one at a time, with recommendations based on your scan) to fill gaps: risk areas, user roles, authentication, data strategy, critical journeys. Skip questions the user has already answered.
 
-3. **Classify context** — based on the user's response, determine their persona:
-   - **Developer + codebase**: has the code, wants tests for their changes
-   - **QA + scenarios**: knows what to test, wants it automated
-   - **PM + PRD**: has requirements, wants coverage
-   - **URL-only**: just has a URL, needs guidance on everything
-
-4. **Targeted questions** — ask 3-5 questions, one at a time, each with a recommendation based on your scan. Cover:
-   - Risk areas (what breaks would hurt most?)
-   - User roles and permissions
-   - Authentication requirements
-   - Data strategy (test data creation, cleanup)
-   - Critical user journeys
-
-   If the user already provided detailed requirements, skip questions that are already answered — but still write the strategy.
-
-5. **Write `test-strategy.md`** containing:
+4. **Write `test-strategy.md`** containing:
    - **App profile**: name, URL, framework, key pages/features
    - **Risk profile**: what matters most, what's fragile
    - **Testing scope**: what's in/out, user roles to cover
@@ -118,17 +98,7 @@ If cloud MCP tools are available (`SHIPLIGHT_API_TOKEN` is set), use the `/shipl
    - **Edge cases**: at least 2 per journey (e.g., invalid input, timeout, empty state)
    - **Data requirements**: what test data is needed
 
-3. **Ambiguity scan** — review each journey for testing-specific risks:
-   - **Data dependencies**: does the test rely on specific data existing? Can it create its own?
-   - **Timing / async**: loading spinners, animations, background processes to wait for?
-   - **Dynamic content**: dates, random IDs, content that changes between runs?
-   - **Auth boundaries**: does the test cross permission levels or require multiple users?
-   - **Third-party dependencies**: payment processors, email services, OAuth providers?
-   - **State isolation**: does one test's data affect another? Cleanup needed?
-   - **Flakiness risks**: race conditions, viewport-dependent behavior, network sensitivity?
-   - **Environment variance**: behavior differences between staging/prod? Feature flags?
-
-   Add a **Testing Notes** section to each journey with identified risks and recommended mitigations. If any ambiguities require user input, ask (one at a time, with a recommended answer and impact statement).
+3. **Review for testing risks** — scan each journey for issues that would cause flaky or incomplete tests: data dependencies, timing/async behavior, dynamic content, auth boundaries, third-party services, state isolation, environment differences. Add a **Testing Notes** section to each journey with identified risks and mitigations. If anything is ambiguous, ask the user (one at a time, with a recommended answer and impact statement).
 
 4. **Write `test-spec.md`** with all journey specs.
 
@@ -172,8 +142,6 @@ If cloud MCP tools are available (`SHIPLIGHT_API_TOKEN` is set), use the `/shipl
    - Then by risk (highest risk first)
 
 4. **Per-test guidance** — for each test file, specify:
-   - **Estimated statement count**: how many YAML statements expected
-   - **Statement type breakdown**: e.g., "8 ACTION, 3 VERIFY, 1 WAIT_UNTIL"
    - **Data strategy**: what data to create/use, cleanup approach
    - **Wait strategy**: where to use WAIT_UNTIL vs WAIT, expected loading points
    - **Flakiness risks**: specific things to watch for in this test
@@ -181,7 +149,7 @@ If cloud MCP tools are available (`SHIPLIGHT_API_TOKEN` is set), use the `/shipl
 5. **Write `test-plan.md`**.
 
 6. **Checkpoint** — present summary:
-   > Ready to implement **N** test files with ~**M** total statements. Shall I proceed?
+   > Ready to implement **N** test files. Shall I proceed?
 
 ---
 
@@ -189,7 +157,7 @@ If cloud MCP tools are available (`SHIPLIGHT_API_TOKEN` is set), use the `/shipl
 
 **Goal:** Set up the project and write all YAML tests guided by the plan.
 
-**Input:** reads `test-specs/test-plan.md` (if absent, falls back to unguided flow)
+**Input:** reads `test-specs/test-plan.md`
 
 ### Setup
 
@@ -234,9 +202,9 @@ Skip any steps already done (project exists, deps installed, auth configured).
    const code = authenticator.generate(process.env.MY_APP_TOTP_SECRET!);
    ```
 
-   **Verify auth works before writing any tests.** Run `npx shiplight test --headed` to execute just the auth setup — confirm it logs in and saves `storage-state.json`. If it fails, stop and ask the user for help. Auth is a prerequisite for everything else; do not proceed until it passes.
+   **Verify auth before proceeding.** Run `npx shiplight test --headed` to execute the auth setup and confirm it saves `storage-state.json`. If it fails, escalate to the user — auth is a prerequisite for everything else.
 
-   If the test plan involves special auth requirements (e.g., one account per test, multiple roles, per-test login), confirm the auth strategy with the user before proceeding.
+   If the test plan involves special auth requirements (e.g., one account per test, multiple roles), confirm the auth strategy with the user before proceeding.
 
 ### Write tests
 
@@ -252,7 +220,6 @@ For each test in the plan (or each test the user wants):
 **Important:** Do NOT write YAML tests from imagination. Always walk through the app in a browser session first to capture real locators. Tests without locators are rejected by `validate_yaml_test`.
 
 When guided by `test-plan.md`:
-- Follow the recommended statement types and counts
 - Apply the specified wait strategy at loading points
 - Cover the edge cases and assertions defined in the spec
 
@@ -268,10 +235,9 @@ npx shiplight test --headed
 
 1. **Report** — tell the user which test failed and why (one sentence).
 2. **Classify** the failure:
-   - **Implementation fix** (wrong locator, missing wait, timing) → fix and retry. Maximum **2 retries** per test.
+   - **Implementation fix** (wrong locator, missing wait, timing) → fix and retry.
    - **Spec mismatch** (app behavior differs from spec) → ask the user whether to update the spec or skip the scenario.
-3. **Escalate after 2 retries** — stop and ask:
-   > Test [name] is failing because [reason]. Want me to adjust the test, skip it, or try a different approach?
+3. **Escalate** if a fix doesn't work — don't keep retrying the same approach.
 
 ---
 
@@ -281,7 +247,7 @@ npx shiplight test --headed
 
 **Input:** reads `test-specs/test-spec.md`, `test-specs/test-plan.md`, and all `.test.yaml` files
 
-This phase only runs when spec artifacts exist. Skip if Phase 4 ran unguided.
+This phase only runs when spec artifacts exist.
 
 ### Coverage check
 
@@ -301,7 +267,7 @@ Flag gaps and extras (test steps not in the spec).
 Update spec artifacts to match what was actually implemented:
 
 1. **Update `test-spec.md`** — mark skipped scenarios with reason, add scenarios that emerged during implementation, update edge cases to reflect what was tested
-2. **Update `test-plan.md`** — correct statement counts, update file structure, note deviations from the original plan
+2. **Update `test-plan.md`** — correct file structure, note deviations from the original plan
 3. **Show diff summary** — tell the user what changed and why
 
 This keeps artifacts accurate for future test maintenance and expansion.
