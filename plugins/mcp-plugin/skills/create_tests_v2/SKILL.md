@@ -302,6 +302,27 @@ npx shiplight test --headed
 
 Flag any spec scenarios that were not covered and explain why.
 
+### Part D: Verify against spec (plan-guided only)
+
+After all tests pass, do a read-only check of every test file against `test-spec.md`:
+
+- For each spec journey, confirm the test covers the **happy path** and all listed **edge cases**
+- Flag gaps: scenarios in the spec that have no corresponding YAML statements
+- Flag extras: test steps that aren't in the spec (not necessarily wrong — but worth noting)
+
+Present findings to the user. Do not modify any files in this step.
+
+### Part E: Reconcile spec artifacts (plan-guided only)
+
+During implementation, the spec will have drifted — skipped scenarios, changed approaches, user-resolved mismatches. Update the spec artifacts to match what was actually written:
+
+1. **Read** all `.test.yaml` files and compare against `test-spec.md` and `test-plan.md`
+2. **Update `test-spec.md`** — mark skipped scenarios as "Skipped" with reason, add any new scenarios that emerged during implementation, update edge cases to reflect what was actually tested
+3. **Update `test-plan.md`** — correct statement counts, update file structure, note any deviations from the original plan
+4. **Show diff summary** — tell the user what changed and why
+
+This keeps the spec artifacts accurate for future test maintenance and expansion.
+
 ## YAML Format Reference
 
 Read the MCP resource `shiplight://yaml-test-spec-v1.3.0` for the full language spec (statement types, templates, variables, suites, hooks, parameterized tests).
