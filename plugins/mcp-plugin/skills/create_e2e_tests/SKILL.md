@@ -1,6 +1,6 @@
 ---
-name: create_tests_v2
-description: "Spec-driven test creation: plan what to test through structured discovery phases, then scaffold a local Shiplight test project and write YAML tests by walking through the app in a browser."
+name: create_e2e_tests
+description: "Spec-driven E2E test creation: plan what to test through structured discovery phases, then scaffold a local Shiplight test project and write YAML tests by walking through the app in a browser."
 ---
 
 # Create Local YAML Tests
@@ -9,7 +9,7 @@ A spec-driven workflow that front-loads testing expertise through structured pla
 
 ## When to use
 
-Use `/shiplight:create_tests_v2` when the user wants to:
+Use `/shiplight:create_e2e_tests` when the user wants to:
 - Create a new local test project from scratch
 - Add YAML tests for a web application
 - Set up authentication for a test project

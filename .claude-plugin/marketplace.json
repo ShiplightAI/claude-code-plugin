@@ -5,7 +5,7 @@
     {
       "name": "mcp-plugin",
       "source": "./plugins/mcp-plugin",
-      "description": "Adds /verify, /create_tests, and /cloud skills for browser testing, YAML test authoring, and cloud test management"
+      "description": "Adds /verify, /create_e2e_tests, /cloud, /review, /design-review, /security-review, /privacy-review, /compliance-review, /resilience-review, /performance-review, /seo-review, and /geo-review skills for browser testing, YAML test authoring, cloud test management, and comprehensive application reviews"
     }
   ]
 }
