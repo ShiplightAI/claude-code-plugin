@@ -214,6 +214,58 @@ Skip any steps already done (project exists, deps installed, auth configured).
 
    If the test plan involves special auth requirements (e.g., one account per test, multiple roles), confirm the auth strategy with the user before proceeding.
 
+   **Per-test auth (advanced)** — when individual tests need distinct identities within the same run, each test can declare its own auth inline instead of sharing a global `storageState`.
+
+   Create an `auth.login.ts` that exports a `login(args)` function:
+
+   ```ts
+   // auth.login.ts
+   import { chromium } from "@playwright/test";
+   import * as fs from "fs";
+   import * as path from "path";
+
+   export async function login(args: Record<string, unknown>): Promise<string> {
+     const stateFile = path.join(".auth", `${args.username}.json`);
+
+     // Return cached state if it exists
+     if (fs.existsSync(stateFile)) return stateFile;
+
+     // Perform login
+     const browser = await chromium.launch();
+     const context = await browser.newContext();
+     const page = await context.newPage();
+
+     await page.goto("/login");
+     await page.getByLabel("Email").fill(args.username as string);
+     await page.getByLabel("Password").fill(args.password as string);
+     await page.getByRole("button", { name: "Sign in" }).click();
+     await page.waitForURL("/dashboard");
+
+     // Cache storageState
+     fs.mkdirSync(path.dirname(stateFile), { recursive: true });
+     await context.storageState({ path: stateFile, indexedDB: true });
+     await browser.close();
+
+     return stateFile;
+   }
+   ```
+
+   Then each test declares `use.auth` and `use.args`:
+
+   ```yaml
+   use:
+     auth: ./auth.login.ts
+     args:
+       username: admin@example.com
+       password: "{{ADMIN_PASSWORD}}"
+   goal: Admin can manage users
+   statements:
+     - URL: /admin/users
+     - VERIFY: User management page is visible
+   ```
+
+   The `args` object passes directly to the login function. Tests without an `auth` field use the default context — inheriting `storageState` from setup projects if configured, or running unauthenticated.
+
 ### Write tests
 
 For each test in the plan (or each test the user wants):
