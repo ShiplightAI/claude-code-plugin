@@ -30,7 +30,12 @@ Skip `/shiplight:triage` when:
 - The application under test is running and accessible
 - Authentication configured (storage state files) if the app requires login
 
-**Before editing any YAML test files**, read the `/shiplight:create_e2e_tests` skill for YAML test format, authoring best practices, authentication patterns, and project structure conventions. That skill is the source of truth for how Shiplight YAML tests should be written.
+**Before editing any YAML test files**, you MUST:
+1. **Read the YAML spec resource** — call `ReadMcpResourceTool` with uri `shiplight://yaml-test-spec-v1.3.0` to learn the correct YAML syntax. Key rules: use `intent:` (NOT `description:`), understand DRAFT vs ACTION vs STEP statement types, and know the correct field names.
+2. **Read the action-entity schema** — call `ReadMcpResourceTool` with uri `shiplight://schemas/action-entity` to learn available actions and their parameters.
+3. Optionally read the `/shiplight:create_e2e_tests` skill for authoring best practices.
+
+Skipping step 1 leads to writing syntactically wrong tests (e.g., using `description:` instead of `intent:`, inventing non-existent action types). This wastes entire fix-run cycles.
 
 ## Configuration
 
@@ -137,6 +142,8 @@ After classification:
 
 ## Phase 3: Investigate
 
+> **CRITICAL: Do NOT skip this phase.** Never guess what the UI looks like from reading source code, translation files, or component names. Always open a browser session and inspect the actual page. Source code tells you what _might_ render; the browser tells you what _does_ render. Guessing from source code leads to wrong fixes (e.g., assuming a button exists when it doesn't, or assuming a dropdown when it's actually a direct button).
+
 Open concurrent browser sessions **using Shiplight MCP browser tools** (`new_session`, `inspect_page`, `act`, `get_locators`, etc.) to inspect the current state of the application. Each session covers a group of related failures (same page area or flow).
 
 1. **Open sessions** — call `new_session` for each group, using the appropriate `starting_url` and `record_evidence: true` for CI traceability. Use `storage_state_path` if auth is needed. If the storage state is expired (page redirects to login), run the project's auth setup to generate a new one.
@@ -151,18 +158,42 @@ Open concurrent browser sessions **using Shiplight MCP browser tools** (`new_ses
 
 3. **Reclassify if needed** — some failures classified as `UNKNOWN` or `LOCATOR_STALE` in Phase 2 may turn out to be `APP_BUG` or `FLOW_CHANGED` after browser inspection. Update the classification.
 
-4. **Build fix plan** — for each fixable test, document exactly what needs to change:
+4. **Walk through the failing flow and capture locators** — for each fixable test:
+   - Use `act` to replay the test's steps one by one in the browser, starting from where the test failed.
+   - At each step, use `get_locators` to capture the Playwright locator and xpath for the target element.
+   - Record the locator data — you will use it in Phase 4 to write enriched ACTION statements.
+   - If a step no longer makes sense (e.g., a button was removed), discover the new flow and capture locators for the new steps.
+
+5. **Build fix plan** — for each fixable test, document exactly what needs to change:
    - Which statements to update (by intent or position)
-   - New locators, new steps, updated assertions
+   - New locators captured from the browser (not guessed from source code)
+   - New steps with locators, updated assertions
    - Any timing adjustments needed
 
-5. **Close sessions** — call `close_session` for each. Keep the returned `local_video_path` and `local_trace_path` for the report.
+6. **Close sessions** — call `close_session` for each. Keep the returned `local_video_path` and `local_trace_path` for the report.
 
 ---
 
 ## Phase 4: Fix
 
 Edit each failing YAML test file based on the fix plan from Phase 3. Do not modify passing tests.
+
+> **CRITICAL: Every new or updated step MUST be enriched with real locators.** During Phase 3 investigation, use `get_locators` to capture the actual Playwright locator and xpath for each element you interact with. Write enriched ACTION statements (`intent:` + `action:` + `locator:` + `xpath:`), NOT bare DRAFT statements (`intent:` only). DRAFTs are ~10s each and cause test timeouts. ACTIONs are ~1s each and replay deterministically.
+>
+> **Wrong** (bare DRAFT — slow, unreliable):
+> ```yaml
+> - intent: Click the checkbox next to the test case
+> ```
+>
+> **Right** (enriched ACTION — fast, deterministic):
+> ```yaml
+> - intent: Click the checkbox next to the test case
+>   action: click
+>   locator: "locator('div').filter({ hasText: 'My Test Case' }).getByRole('checkbox')"
+>   xpath: html/body/div[1]/main/.../input
+> ```
+>
+> If you cannot get a stable locator (e.g., dynamic IDs like `#mantine-abc123`), use a DRAFT as a last resort, but prefer finding a stable alternative locator first via `get_locators` on neighboring elements.
 
 ### Cache optimization
 
@@ -373,6 +404,7 @@ For each skipped test:
 
 ## Tips
 
+- **Investigate all failures in the browser before writing any fix.** Don't do incremental "fix one, run, fix next" cycles. Investigate all failures upfront in Phase 3, capture all needed locators, then write all fixes in Phase 4, then run once to verify. Each test run takes minutes; wasted runs from wrong fixes add up fast.
 - **Read the test output carefully** — the error message usually tells you the failure category without needing a browser.
 - **Group aggressively** — if 5 tests fail on the checkout page, one browser session can investigate all 5.
 - **Don't over-fix** — if a locator update is enough, don't restructure the test. Minimal changes are easier to review.
