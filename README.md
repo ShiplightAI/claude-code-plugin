@@ -8,6 +8,7 @@ AI-powered test automation for Claude Code — ship with confidence by letting t
 - **Skills** — commands that cover the full test and review lifecycle:
   - `/verify` — visually confirm UI changes in the browser after a code change
   - `/create_e2e_tests` — spec-driven E2E test creation with structured discovery phases
+  - `/triage` — reproduce failing E2E tests, diagnose root causes, fix YAML tests, and report application bugs
   - `/cloud` — sync and share regression tests on the cloud platform for scheduled runs, team collaboration, and CI integration
   - `/review` — orchestrator that recommends the right reviews for your app
   - `/design-review` — visual quality, responsive, accessibility, typography, i18n
@@ -33,7 +34,7 @@ After installation, exit and restart Claude Code for the plugin to take effect.
 Run `/context` in Claude Code. You should see:
 
 - **MCP tools** — `plugin:shiplight:shiplight` tools
-- **Skills** — `/verify`, `/create_e2e_tests`, `/cloud`, `/review`, `/design-review`, `/security-review`, `/privacy-review`, `/compliance-review`, `/resilience-review`, `/performance-review`, `/seo-review`, `/geo-review`
+- **Skills** — `/verify`, `/create_e2e_tests`, `/triage`, `/cloud`, `/review`, `/design-review`, `/security-review`, `/privacy-review`, `/compliance-review`, `/resilience-review`, `/performance-review`, `/seo-review`, `/geo-review`
 
 ## Links
 

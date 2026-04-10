@@ -1,6 +1,6 @@
 {
   "name": "shiplight",
-  "description": "Adds /verify, /create_e2e_tests, /cloud, /review, /design-review, /security-review, /privacy-review, /compliance-review, /resilience-review, /performance-review, /seo-review, and /geo-review skills for browser testing, YAML test authoring, cloud test management, and comprehensive application reviews",
+  "description": "Adds /verify, /create_e2e_tests, /triage, /cloud, /review, /design-review, /security-review, /privacy-review, /compliance-review, /resilience-review, /performance-review, /seo-review, and /geo-review skills for browser testing, YAML test authoring, test failure triage, cloud test management, and comprehensive application reviews",
   "version": "1.0.0",
   "homepage": "https://www.shiplight.ai",
   "mcpServers": {
