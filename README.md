@@ -1,42 +1,30 @@
-# Shiplight Claude Code Plugin
+# Shiplight Claude Code Plugin (deprecated)
 
-AI-powered test automation for Claude Code — ship with confidence by letting the agent verify, test, and iterate autonomously.
+> **This repo is deprecated.** Skills and MCP installation have moved to [ShiplightAI/agent-skills](https://github.com/ShiplightAI/agent-skills), which supports Claude Code and 40+ other coding agents from a single source.
 
-## Features
+## Migrate
 
-- **MCP tools** — gives Claude Code a real browser so it can autonomously code, verify in the browser, and iterate — closing the loop without human intervention
-- **Skills** — commands that cover the full test and review lifecycle:
-  - `/verify` — visually confirm UI changes in the browser after a code change
-  - `/create_e2e_tests` — spec-driven E2E test creation with structured discovery phases
-  - `/triage` — reproduce failing E2E tests, diagnose root causes, fix YAML tests, and report application bugs
-  - `/cloud` — sync and share regression tests on the cloud platform for scheduled runs, team collaboration, and CI integration
-  - `/review` — orchestrator that recommends the right reviews for your app
-  - `/design-review` — visual quality, responsive, accessibility, typography, i18n
-  - `/security-review` — OWASP Top 10, auth, injection, access control, supply chain
-  - `/privacy-review` — PII leakage, consent, tracking, data flows, user rights
-  - `/compliance-review` — HIPAA, SOC 2, PCI-DSS, GDPR technical requirements
-  - `/resilience-review` — error handling, graceful degradation, edge states, API contracts
-  - `/performance-review` — Core Web Vitals, bundles, resources, runtime performance
-  - `/seo-review` — meta tags, structured data, crawlability, semantic HTML
-  - `/geo-review` — AI citation readiness, llms.txt, entity clarity, AI search testing
+Install skills and the MCP server in one step:
 
-## Install
-
-Add marketplace and install the plugin:
 ```bash
-claude plugin marketplace add ShiplightAI/claude-code-plugin && claude plugin install --scope project mcp-plugin@shiplight-plugins
+npx -y skills add ShiplightAI/agent-skills -a claude-code -y && \
+npx -y add-mcp "npx -y @shiplightai/mcp@latest" -n shiplight --env PWDEBUG=console -a claude-code -y
 ```
 
-After installation, exit and restart Claude Code for the plugin to take effect.
+Restart Claude Code after install. Run `/context` to verify the `shiplight` MCP tools and the `/verify`, `/create_e2e_tests`, `/triage`, `/cloud`, and review skills are available.
 
-## Verify Installation
+Full install guide: [docs.shiplight.ai quick start](https://docs.shiplight.ai/getting-started/quick-start).
 
-Run `/context` in Claude Code. You should see:
+## Why this moved
 
-- **MCP tools** — `plugin:shiplight:shiplight` tools
-- **Skills** — `/verify`, `/create_e2e_tests`, `/triage`, `/cloud`, `/review`, `/design-review`, `/security-review`, `/privacy-review`, `/compliance-review`, `/resilience-review`, `/performance-review`, `/seo-review`, `/geo-review`
+The Claude Code / Cursor / Codex plugin repos have been consolidated into a single source of truth. The [`skills`](https://www.npmjs.com/package/skills) CLI installs skills across 40+ agents; [`add-mcp`](https://www.npmjs.com/package/add-mcp) installs the MCP server. One update reaches every supported agent.
+
+## Existing installs
+
+The old marketplace install still works, but it won't receive new skills or fixes. Re-install with the commands above to stay current.
 
 ## Links
 
 - [Shiplight](https://shiplight.ai)
 - [Documentation](https://docs.shiplight.ai)
+- [New skills repo](https://github.com/ShiplightAI/agent-skills)
